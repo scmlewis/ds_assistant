@@ -15,19 +15,9 @@ level = "info"
 [server]
 headless = true
 port = 8501
-baseUrlPath = ""
 maxUploadSize = 200
 enableCORS = false
 enableXsrfProtection = true
 
 [browser]
-serverAddress = "localhost"
 gatherUsageStats = false
-
-[deprecation]
-showPyplotGlobalUse = false
-showfileUploaderEncoding = false
-showImageCompression = false
-
-[client.toolbarMode]
-viewer = "viewer"
