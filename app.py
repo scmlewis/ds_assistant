@@ -69,20 +69,29 @@ def apply_custom_styling():
         color: var(--text-primary);
     }
 
-    /* Sidebar */
+    /* Sidebar - ensure proper layout */
     [data-testid="stSidebar"] {
         background-color: var(--dark-bg-secondary) !important;
         border-right: 1px solid var(--border-color);
+        position: relative;
+        z-index: 100;
     }
 
     [data-testid="stSidebar"] > div:first-child {
         background-color: var(--dark-bg-secondary) !important;
+        width: 100%;
     }
 
-    /* Main content area */
-    [data-testid="stAppViewContainer"] > section {
+    /* Main content area - ensure it doesn't overlap sidebar */
+    [data-testid="stAppViewContainer"] {
+        display: flex;
+        width: 100%;
+    }
+
+    [data-testid="stAppViewContainer"] > section:first-of-type {
         padding: 2rem 2rem;
         max-width: 100%;
+        flex: 1;
     }
 
     /* App header */
@@ -389,23 +398,6 @@ def apply_custom_styling():
     /* Smooth animations */
     * {
         transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    /* Increase sidebar width */
-    [data-testid="stSidebar"] {
-        min-width: 250px !important;
-        background-color: var(--dark-bg-secondary) !important;
-    }
-
-    [data-testid="stSidebar"] [data-testid="stSidebarNav"] {
-        padding-right: 1rem;
-    }
-
-    /* Help box in sidebar - reduce padding */
-    [data-testid="stSidebar"] .help-box {
-        padding: 1rem;
-        margin: 1rem 0;
-        font-size: 0.9rem;
     }
     </style>
     """
