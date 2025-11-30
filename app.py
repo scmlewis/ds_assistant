@@ -34,10 +34,6 @@ if "trained_models" not in st.session_state:
     st.session_state.trained_models = {}
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
-if "tuned_models" not in st.session_state:
-    st.session_state.tuned_models = {}
-if "tuning_results" not in st.session_state:
-    st.session_state.tuning_results = {}
 
 
 # Custom CSS Styling - Modern Dark Theme
@@ -934,95 +930,6 @@ def plot_categorical_distributions(df, categorical_cols=None, max_categories=20)
 
 # ============================================================================
 # ADVANCED FEATURES - HYPERPARAMETER TUNING
-# ============================================================================
-
-def tune_hyperparameters(X_train, y_train, X_test, y_test, model_name, mode):
-    """
-    Perform hyperparameter tuning using GridSearchCV.
-    Returns best model, best params, and comparison results.
-    """
-    param_grids = {
-        'Logistic Regression': {
-            'C': [0.001, 0.01, 0.1, 1, 10, 100],
-            'solver': ['lbfgs', 'liblinear'],
-            'max_iter': [200, 500, 1000]
-        },
-        'Random Forest': {
-            'n_estimators': [50, 100, 200],
-            'max_depth': [5, 10, 15, None],
-            'min_samples_split': [2, 5, 10],
-            'min_samples_leaf': [1, 2, 4]
-        },
-        'Decision Tree': {
-            'max_depth': [5, 10, 15, 20, None],
-            'min_samples_split': [2, 5, 10],
-            'min_samples_leaf': [1, 2, 4],
-            'criterion': ['gini', 'entropy']
-        }
-    }
-    
-    # Select model
-    if mode == 'Classification':
-        model_map = {
-            'Logistic Regression': LogisticRegression(random_state=42, max_iter=1000),
-            'Random Forest': RandomForestClassifier(random_state=42),
-            'Decision Tree': DecisionTreeClassifier(random_state=42)
-        }
-    else:
-        model_map = {
-            'Linear Regression': LinearRegression(),
-            'Random Forest': RandomForestRegressor(random_state=42),
-            'Decision Tree': DecisionTreeRegressor(random_state=42)
-        }
-    
-    base_model = model_map.get(model_name)
-    if base_model is None:
-        return None, None, None
-    
-    param_grid = param_grids.get(model_name, {})
-    if not param_grid:
-        return None, None, None
-    
-    # Scoring metric
-    scoring = 'accuracy' if mode == 'Classification' else 'r2'
-    
-    # GridSearchCV
-    grid_search = GridSearchCV(
-        base_model, 
-        param_grid, 
-        cv=5, 
-        scoring=scoring, 
-        n_jobs=-1,
-        verbose=0
-    )
-    
-    grid_search.fit(X_train, y_train)
-    
-    best_model = grid_search.best_estimator_
-    best_params = grid_search.best_params_
-    
-    # Evaluate
-    if mode == 'Classification':
-        baseline_score = accuracy_score(y_test, base_model.fit(X_train, y_train).predict(X_test))
-        best_score = accuracy_score(y_test, best_model.predict(X_test))
-        metric_name = 'Accuracy'
-    else:
-        baseline_score = r2_score(y_test, base_model.fit(X_train, y_train).predict(X_test))
-        best_score = r2_score(y_test, best_model.predict(X_test))
-        metric_name = 'R² Score'
-    
-    comparison = {
-        'Baseline': baseline_score,
-        'Optimized': best_score,
-        'Improvement': best_score - baseline_score,
-        'Improvement %': ((best_score - baseline_score) / abs(baseline_score) * 100) if baseline_score != 0 else 0,
-        'Metric': metric_name
-    }
-    
-    return best_model, best_params, comparison
-
-# ============================================================================
-# ADVANCED FEATURES - FEATURE ENGINEERING
 # ============================================================================
 
 def engineer_features(df, numeric_cols, feature_type='polynomial', degree=2, interaction_cols=None):
@@ -2176,63 +2083,6 @@ def page_model_training():
             st.success(f"✅ Using {len(engineered_cols)} engineered features from Clean Data page")
             with st.expander("📋 View engineered features"):
                 st.write(engineered_cols)
-        
-        # Advanced Features: Hyperparameter Tuning
-        st.subheader("⚡ Hyperparameter Optimization")
-        
-        tune_col1, tune_col2 = st.columns([1, 1])
-        
-        with tune_col1:
-            tune_model = st.selectbox("Select Model to Tune", selected_models, key="tune_model_select")
-            if st.button("🔧 Start Hyperparameter Tuning", use_container_width=True, key="tune_btn"):
-                with st.spinner("⏳ Tuning hyperparameters with GridSearchCV (5-fold CV)...\n\nThis may take 20-60 seconds depending on dataset size."):
-                    best_tuned_model, best_params, comparison = tune_hyperparameters(
-                        X_train, y_train, X_test, y_test, tune_model, mode
-                    )
-                    
-                    if best_tuned_model is not None:
-                        # Store in session state
-                        st.session_state.tuning_results[tune_model] = {
-                            'model': best_tuned_model,
-                            'params': best_params,
-                            'comparison': comparison
-                        }
-                        st.session_state.tuned_models[tune_model] = best_tuned_model
-                        st.success("✅ Tuning Complete!")
-        
-        # Display tuning results from session state
-        if st.session_state.tuning_results:
-            for tuned_model_name, results in st.session_state.tuning_results.items():
-                comparison = results['comparison']
-                best_params = results['params']
-                
-                st.markdown("**Performance Comparison:**")
-                comparison_df = pd.DataFrame([comparison])
-                st.dataframe(comparison_df, use_container_width=True)
-                
-                # Show improvement clearly
-                improvement = comparison.get('Improvement', 0)
-                improvement_pct = comparison.get('Improvement %', 0)
-                if improvement > 0:
-                    st.success(f"✅ **Model improved by {improvement:.4f} ({improvement_pct:.2f}%)**")
-                elif improvement == 0:
-                    st.info("ℹ️ Model already had optimal parameters")
-                
-                # Display best parameters
-                st.markdown("**Best Parameters Found:**")
-                params_display = pd.DataFrame(list(best_params.items()), columns=['Parameter', 'Value'])
-                st.dataframe(params_display, use_container_width=True)
-                
-                # Option to use tuned model with clear explanation
-                st.markdown("**What to do next:**")
-                st.markdown("""
-                - **View tuned model in feature importance** (refresh page)
-                - **Compare with original** using the main results table
-                - **Export the tuned model** using the Export Model section below
-                """)
-        
-        with tune_col2:
-            st.info("ℹ️ Hyperparameter tuning uses GridSearchCV with 5-fold cross-validation to find optimal parameters that maximize model performance on your data.")
         
         # Report Export
         st.subheader("📄 Export Report")
