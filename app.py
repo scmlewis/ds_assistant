@@ -2326,7 +2326,7 @@ def page_model_training():
                 👇 <strong>Scroll down</strong> to optimize your model with hyperparameter tuning and SHAP explainability!
             </p>
         </div>
-        """)
+        """, unsafe_allow_html=True)
         
         # Advanced Features: Hyperparameter Tuning
         st.subheader("⚡ Hyperparameter Optimization")
