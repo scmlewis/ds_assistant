@@ -69,29 +69,20 @@ def apply_custom_styling():
         color: var(--text-primary);
     }
 
-    /* Sidebar - ensure proper layout */
+    /* Sidebar */
     [data-testid="stSidebar"] {
         background-color: var(--dark-bg-secondary) !important;
         border-right: 1px solid var(--border-color);
-        position: relative;
-        z-index: 100;
     }
 
     [data-testid="stSidebar"] > div:first-child {
         background-color: var(--dark-bg-secondary) !important;
-        width: 100%;
     }
 
-    /* Main content area - ensure it doesn't overlap sidebar */
-    [data-testid="stAppViewContainer"] {
-        display: flex;
-        width: 100%;
-    }
-
-    [data-testid="stAppViewContainer"] > section:first-of-type {
+    /* Main content area */
+    [data-testid="stAppViewContainer"] > section {
         padding: 2rem 2rem;
         max-width: 100%;
-        flex: 1;
     }
 
     /* App header */

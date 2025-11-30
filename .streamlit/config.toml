@@ -28,3 +28,6 @@ gatherUsageStats = false
 showPyplotGlobalUse = false
 showfileUploaderEncoding = false
 showImageCompression = false
+
+[client.toolbarMode]
+viewer = "viewer"
