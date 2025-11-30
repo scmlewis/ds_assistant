@@ -25,7 +25,8 @@ build/
 Thumbs.db
 
 # Streamlit
-.streamlit/
+.streamlit/*
+!.streamlit/config.toml
 
 # Test files
 test.txt
