@@ -38,8 +38,6 @@ if "tuned_models" not in st.session_state:
     st.session_state.tuned_models = {}
 if "tuning_results" not in st.session_state:
     st.session_state.tuning_results = {}
-if "importance_results" not in st.session_state:
-    st.session_state.importance_results = None
 
 
 # Custom CSS Styling - Modern Dark Theme
@@ -509,47 +507,6 @@ def empty_state(icon, title, message):
 def generate_ai_system_prompt(df=None):
     """Placeholder for AI prompt generation."""
     pass
-
-def calculate_permutation_importance(model, X_test, y_test, feature_names):
-    """Calculate permutation-based feature importance.
-    Measures importance by how much model performance drops when feature is shuffled.
-    """
-    try:
-        from sklearn.inspection import permutation_importance
-        
-        result = permutation_importance(model, X_test, y_test, n_repeats=10, random_state=42, n_jobs=-1)
-        importance_df = pd.DataFrame({
-            'Feature': feature_names,
-            'Importance': result.importances_mean,
-            'Std Dev': result.importances_std
-        }).sort_values('Importance', ascending=False)
-        
-        return importance_df
-    except Exception as e:
-        st.error(f"Permutation importance calculation failed: {str(e)}")
-        return None
-
-def plot_permutation_importance(importance_df, title="Feature Importance (Permutation-based)"):
-    """Visualize permutation importance with error bars."""
-    fig, ax = plt.subplots(figsize=(10, 6))
-    fig.patch.set_facecolor('#1A1F2E')
-    ax.set_facecolor('#252D3D')
-    
-    colors = plt.cm.Blues(np.linspace(0.4, 0.9, len(importance_df)))
-    
-    ax.barh(importance_df['Feature'], importance_df['Importance'], 
-            xerr=importance_df['Std Dev'], color=colors, edgecolor='#2D3748', capsize=5)
-    
-    ax.set_xlabel('Importance Score', color='#E8EAED', fontweight='600')
-    ax.set_ylabel('Features', color='#E8EAED', fontweight='600')
-    ax.set_title(title, color='#E8EAED', fontweight='600', pad=15)
-    ax.tick_params(colors='#E8EAED')
-    
-    for spine in ax.spines.values():
-        spine.set_color('#2D3748')
-    
-    plt.tight_layout()
-    return fig
 
 def generate_data_profile(df):
     """Generate comprehensive data profiling report."""
@@ -2276,34 +2233,6 @@ def page_model_training():
         
         with tune_col2:
             st.info("ℹ️ Hyperparameter tuning uses GridSearchCV with 5-fold cross-validation to find optimal parameters that maximize model performance on your data.")
-        
-        # Advanced Features: Model Explainability
-        st.subheader("📊 Feature Importance Analysis")
-        
-        best_model_obj = st.session_state.trained_models[best_model]["model"]
-        y_test = st.session_state.trained_models[best_model]["y_test"]
-        
-        if st.button("🔍 Calculate Feature Importance", use_container_width=True, key="importance_btn"):
-            with st.spinner("Calculating permutation importance (this measures how important each feature is)..."):
-                importance_df = calculate_permutation_importance(best_model_obj, X_test, y_test, selected_features)
-                
-                if importance_df is not None:
-                    st.session_state.importance_results = importance_df
-                    st.success("✅ Feature importance calculated!")
-        
-        # Display importance results if they exist in session state
-        if st.session_state.importance_results is not None:
-            importance_df = st.session_state.importance_results
-            col1, col2 = st.columns([2, 1])
-            
-            with col1:
-                fig = plot_permutation_importance(importance_df, f"Feature Importance ({best_model})")
-                st.pyplot(fig, use_container_width=True)
-            
-            with col2:
-                st.write("**Importance Scores:**")
-                st.dataframe(importance_df, use_container_width=True)
-        
         
         # Report Export
         st.subheader("📄 Export Report")
