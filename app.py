@@ -39,6 +39,13 @@ if "trained_models" not in st.session_state:
     st.session_state.trained_models = {}
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
+if "tuned_models" not in st.session_state:
+    st.session_state.tuned_models = {}
+if "tuning_results" not in st.session_state:
+    st.session_state.tuning_results = {}
+if "shap_results" not in st.session_state:
+    st.session_state.shap_results = {}
+
 
 # Custom CSS Styling - Modern Dark Theme
 def apply_custom_styling():
@@ -2342,50 +2349,45 @@ def page_model_training():
                     )
                     
                     if best_tuned_model is not None:
+                        # Store in session state
+                        st.session_state.tuning_results[tune_model] = {
+                            'model': best_tuned_model,
+                            'params': best_params,
+                            'comparison': comparison
+                        }
+                        st.session_state.tuned_models[tune_model] = best_tuned_model
                         st.success("✅ Tuning Complete!")
-                        
-                        # Display comparison with visual indicators
-                        st.markdown("**Performance Comparison:**")
-                        comparison_df = pd.DataFrame([comparison])
-                        st.dataframe(comparison_df, use_container_width=True)
-                        
-                        # Show improvement clearly
-                        improvement = comparison.get('Improvement', 0)
-                        improvement_pct = comparison.get('Improvement %', 0)
-                        if improvement > 0:
-                            st.success(f"✅ **Model improved by {improvement:.4f} ({improvement_pct:.2f}%)**")
-                        elif improvement == 0:
-                            st.info("ℹ️ Model already had optimal parameters")
-                        
-                        # Display best parameters
-                        st.markdown("**Best Parameters Found:**")
-                        params_display = pd.DataFrame(list(best_params.items()), columns=['Parameter', 'Value'])
-                        st.dataframe(params_display, use_container_width=True)
-                        
-                        # Store tuned model
-                        st.session_state.tuned_models = {tune_model: best_tuned_model}
-                        
-                        # Option to use tuned model with clear explanation
-                        st.markdown("**What to do next:**")
-                        st.markdown("""
-                        - **View tuned model in feature importance** (refresh page)
-                        - **Compare with original** using the main results table
-                        - **Export the tuned model** using the Export Model section below
-                        """)
-                        
-                        if st.button("💾 Save Tuned Model", use_container_width=True, key="save_tuned"):
-                            model_instances[f"{tune_model} (Tuned)"] = {
-                                "model": best_tuned_model,
-                                "X_test": X_test,
-                                "y_test": y_test,
-                                "y_pred": best_tuned_model.predict(X_test),
-                                "y_pred_proba": best_tuned_model.predict_proba(X_test)[:, 1] if mode == "Classification" and hasattr(best_tuned_model, 'predict_proba') else None,
-                                "cv_scores": cross_val_score(best_tuned_model, X_train, y_train, cv=config.CROSS_VAL_FOLDS, scoring='accuracy' if mode == "Classification" else 'r2'),
-                                "mode": mode
-                            }
-                            st.success("✓ Tuned model saved! You can now export it.")
-                    else:
-                        st.error("⚠️ Could not tune this model type. Try a different model.")
+        
+        # Display tuning results from session state
+        if st.session_state.tuning_results:
+            for tuned_model_name, results in st.session_state.tuning_results.items():
+                comparison = results['comparison']
+                best_params = results['params']
+                
+                st.markdown("**Performance Comparison:**")
+                comparison_df = pd.DataFrame([comparison])
+                st.dataframe(comparison_df, use_container_width=True)
+                
+                # Show improvement clearly
+                improvement = comparison.get('Improvement', 0)
+                improvement_pct = comparison.get('Improvement %', 0)
+                if improvement > 0:
+                    st.success(f"✅ **Model improved by {improvement:.4f} ({improvement_pct:.2f}%)**")
+                elif improvement == 0:
+                    st.info("ℹ️ Model already had optimal parameters")
+                
+                # Display best parameters
+                st.markdown("**Best Parameters Found:**")
+                params_display = pd.DataFrame(list(best_params.items()), columns=['Parameter', 'Value'])
+                st.dataframe(params_display, use_container_width=True)
+                
+                # Option to use tuned model with clear explanation
+                st.markdown("**What to do next:**")
+                st.markdown("""
+                - **View tuned model in feature importance** (refresh page)
+                - **Compare with original** using the main results table
+                - **Export the tuned model** using the Export Model section below
+                """)
         
         with tune_col2:
             st.info("ℹ️ Hyperparameter tuning uses GridSearchCV with 5-fold cross-validation to find optimal parameters that maximize model performance on your data.")
@@ -2446,10 +2448,14 @@ def page_model_training():
                                                             X_test_sample, model_type)
                                 
                                 if shap_fig is not None:
-                                    st.pyplot(shap_fig, use_container_width=True)
+                                    st.session_state.shap_results['summary'] = shap_fig
                                     st.success("✓ SHAP summary plot generated!")
                         except Exception as e:
                             st.error(f"⚠️ SHAP visualization error: {str(e)}")
+                
+                # Display SHAP summary if it exists in session state
+                if 'summary' in st.session_state.shap_results:
+                    st.pyplot(st.session_state.shap_results['summary'], use_container_width=True)
             
             with shap_col2:
                 st.write("**Individual Prediction Explanation:**")
@@ -2482,21 +2488,32 @@ def page_model_training():
                                                                   X_test, pred_idx, model_type)
                                 
                                 if shap_explanation is not None:
+                                    st.session_state.shap_results['explanation'] = {
+                                        'idx': pred_idx,
+                                        'explanation': shap_explanation
+                                    }
                                     st.success("✓ Explanation Generated!")
-                                    
-                                    sample = X_test.iloc[pred_idx]
-                                    st.markdown(f"**Sample #{pred_idx} - Feature Values:**")
-                                    st.dataframe(pd.DataFrame([sample]), use_container_width=True)
-                                    
-                                    st.markdown(f"**SHAP Values (Feature Contributions):**")
-                                    shap_contrib = pd.DataFrame({
-                                        'Feature': X_test.columns,
-                                        'Value': sample.values,
-                                        'SHAP Impact': shap_explanation['shap_values']
-                                    })
-                                    st.dataframe(shap_contrib.sort_values('SHAP Impact', key=abs, ascending=False), use_container_width=True)
                         except Exception as e:
                             st.error(f"⚠️ SHAP explanation error: {str(e)}")
+                
+                # Display SHAP explanation if it exists in session state
+                if 'explanation' in st.session_state.shap_results:
+                    result = st.session_state.shap_results['explanation']
+                    shap_explanation = result['explanation']
+                    pred_idx = result['idx']
+                    
+                    sample = X_test.iloc[pred_idx]
+                    st.markdown(f"**Sample #{pred_idx} - Feature Values:**")
+                    st.dataframe(pd.DataFrame([sample]), use_container_width=True)
+                    
+                    st.markdown(f"**SHAP Values (Feature Contributions):**")
+                    shap_contrib = pd.DataFrame({
+                        'Feature': X_test.columns,
+                        'Value': sample.values,
+                        'SHAP Impact': shap_explanation['shap_values']
+                    })
+                    st.dataframe(shap_contrib.sort_values('SHAP Impact', key=abs, ascending=False), use_container_width=True)
+        
         
         # Report Export
         st.subheader("📄 Export Report")
