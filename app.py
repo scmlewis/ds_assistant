@@ -1197,19 +1197,19 @@ def landing_page():
     
     # Stats/Highlights Section
     
-    # Tips Section (Integrated with Advanced Features)
+    # Tips Section
     st.markdown("<h2 style='margin-top: 3rem; margin-bottom: 1.5rem; padding-bottom: 1rem;'>💡 Pro Tips</h2>", unsafe_allow_html=True)
     
     tips = [
-        "🎯 Start with Sample Data — Load Iris or Diabetes datasets to explore features without your own data",
-        "📊 Use Live Preview — All cleaning operations show before/after comparison before you commit",
-        "🔗 Data Persists — Navigate freely between pages - your data and models are always preserved",
+        "🎯 Start with Sample Data — Load Iris or Diabetes datasets to explore without your own data",
+        "📊 Use Live Preview — All cleaning operations show before/after comparison before committing",
+        "🔗 Data Persists — Navigate between pages - your data and models are always preserved",
         "🤖 Compare Models — Train multiple models together to find the best performer for your task",
         "📥 Export Everything — Download cleaned data, trained models, and analysis reports",
-        "⚡ Try Feature Engineering — Clean Data page: Polynomial features, interactions, and binning to improve models",
-        "🔧 Optimize Models — Model Training page: Use hyperparameter tuning to boost accuracy by 10-20%",
-        "🔬 Explain Predictions — Model Training page: SHAP explainability shows why models make predictions",
-        "📈 Statistical Testing — Visualize Data page: Check p-values and significance of relationships"
+        "⚡ Feature Engineering — Use polynomial features, interactions, and binning to improve model performance",
+        "📈 Statistical Testing — Check p-values and significance of relationships in correlation matrices",
+        "🎯 Classification Tips — Select target variable with 2-5 unique classes for best results",
+        "📉 Regression Tips — Choose numeric target variable and explore feature relationships first"
     ]
     
     for tip in tips:
