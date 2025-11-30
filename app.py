@@ -2234,7 +2234,7 @@ def page_model_training():
         with col1:
             if mode == "Classification":
                 st.write("**Confusion Matrix (Best Model)**")
-                best_model_data = model_instances[best_model]
+                best_model_data = st.session_state.trained_models[best_model]
                 cm = confusion_matrix(best_model_data["y_test"], best_model_data["y_pred"])
                 
                 # Create normalized confusion matrix for percentages
@@ -2270,7 +2270,7 @@ def page_model_training():
         with col2:
             if mode == "Regression":
                 st.write("**Residuals Plot (Best Model)**")
-                best_model_data = model_instances[best_model]
+                best_model_data = st.session_state.trained_models[best_model]
                 residuals = best_model_data["y_test"] - best_model_data["y_pred"]
                 fig, ax = plt.subplots(figsize=(8, 6))
                 fig.patch.set_facecolor('#1A1F2E')
@@ -2284,15 +2284,15 @@ def page_model_training():
                 for spine in ax.spines.values():
                     spine.set_color('#2D3748')
                 st.pyplot(fig, use_container_width=True)
-            elif mode == "Classification" and model_instances[best_model]["y_pred_proba"] is not None:
+            elif mode == "Classification" and st.session_state.trained_models[best_model]["y_pred_proba"] is not None:
                 st.write("**ROC Curve (Best Model)**")
-                best_model_data = model_instances[best_model]
+                best_model_data = st.session_state.trained_models[best_model]
                 roc_fig, roc_auc = plot_roc_curve(best_model_data["y_test"], best_model_data["y_pred_proba"], best_model)
                 st.pyplot(roc_fig, use_container_width=True)
         
         # Sample Predictions
         st.subheader("📋 Sample Predictions")
-        best_model_data = model_instances[best_model]
+        best_model_data = st.session_state.trained_models[best_model]
         sample_predictions = pd.DataFrame({
             "Actual": best_model_data["y_test"].values[:10],
             "Predicted": best_model_data["y_pred"][:10]
@@ -2309,7 +2309,7 @@ def page_model_training():
         
         # Feature Importance (if available)
         st.subheader("🎯 Feature Importance Analysis")
-        best_model_obj = model_instances[best_model]["model"]
+        best_model_obj = st.session_state.trained_models[best_model]["model"]
         importance_df = get_feature_importance(best_model_obj, selected_features)
         
         if importance_df is not None:
@@ -2434,11 +2434,11 @@ def page_model_training():
             
             with shap_col1:
                 st.write("**Feature Importance via SHAP:**")
-                if best_model in model_instances:
+                if best_model in st.session_state.trained_models:
                     if st.button("📊 Generate SHAP Summary", use_container_width=True, key="shap_summary_btn"):
                         try:
                             with st.spinner("🔄 Generating SHAP summary plot (this may take 10-30 seconds)..."):
-                                best_model_obj = model_instances[best_model]["model"]
+                                best_model_obj = st.session_state.trained_models[best_model]["model"]
                                 model_type = 'tree' if 'Forest' in best_model or 'Tree' in best_model else 'linear'
                                 
                                 # Sample data if too large
@@ -2459,16 +2459,16 @@ def page_model_training():
             
             with shap_col2:
                 st.write("**Individual Prediction Explanation:**")
-                if best_model in model_instances:
+                if best_model in st.session_state.trained_models:
                     # Show sample statistics to help selection
                     sample_stats_col1, sample_stats_col2, sample_stats_col3 = st.columns(3)
                     with sample_stats_col1:
                         st.metric("📊 Total Samples", len(X_test))
                     with sample_stats_col2:
-                        correct = (model_instances[best_model]["y_pred"] == model_instances[best_model]["y_test"]).sum()
+                        correct = (st.session_state.trained_models[best_model]["y_pred"] == st.session_state.trained_models[best_model]["y_test"]).sum()
                         st.metric("✅ Correct", correct)
                     with sample_stats_col3:
-                        incorrect = (model_instances[best_model]["y_pred"] != model_instances[best_model]["y_test"]).sum()
+                        incorrect = (st.session_state.trained_models[best_model]["y_pred"] != st.session_state.trained_models[best_model]["y_test"]).sum()
                         st.metric("❌ Incorrect", incorrect)
                     
                     pred_idx = st.number_input("Select sample index (0 to {}):".format(len(X_test)-1), 
@@ -2480,7 +2480,7 @@ def page_model_training():
                     if st.button("📈 Explain Prediction", use_container_width=True, key="shap_force_btn"):
                         try:
                             with st.spinner("Generating SHAP force plot..."):
-                                best_model_obj = model_instances[best_model]["model"]
+                                best_model_obj = st.session_state.trained_models[best_model]["model"]
                                 model_type = 'tree' if 'Forest' in best_model or 'Tree' in best_model else 'linear'
                                 
                                 shap_explanation = plot_shap_force(best_model_obj, 
@@ -2533,7 +2533,7 @@ def page_model_training():
         
         # Model Export
         st.subheader("💾 Export Model")
-        model_bytes = pickle.dumps(model_instances[best_model]["model"])
+        model_bytes = pickle.dumps(st.session_state.trained_models[best_model]["model"])
         st.download_button(
             label="📥 Download Best Model (Pickle)",
             data=model_bytes,
