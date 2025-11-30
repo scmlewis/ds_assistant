@@ -30,3 +30,6 @@ Thumbs.db
 
 # Test files
 test.txt
+
+# Archive and documentation
+_archive/

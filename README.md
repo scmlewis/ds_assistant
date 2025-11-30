@@ -1,14 +1,15 @@
-# AI Data Science Assistant
+# 🤖 AI Data Science Assistant
 
-An interactive Streamlit application for data science workflows including data cleaning, visualization, and machine learning model training/comparison.
+An interactive Streamlit application for complete data science workflows - from data exploration and cleaning to machine learning model training and comparison.
 
-## Features
+## ✨ Features
 
-- **📤 Upload & Explore** - Load CSV files or use built-in datasets (Iris, Diabetes)
-- **🧹 Smart Data Cleaning** - Remove duplicates, handle missing values, standardize columns, scale features
-- **📊 Powerful Visualizations** - Create correlation matrices, histograms, scatter plots, bar charts, and more
-- **🤖 Model Training** - Train and compare classification or regression models side-by-side
-- **💾 Export Results** - Download cleaned data and trained models
+- **📤 Upload & Explore** - Load CSV files or use built-in datasets (Iris Classification, Diabetes Regression)
+- **🧹 Smart Data Cleaning** - Remove duplicates, handle missing values, standardize columns, scale features, remove outliers
+- **📊 Rich Visualizations** - Correlation heatmaps, histograms, scatter plots, boxplots, bar/pie charts with significance testing
+- **🤖 Model Training** - Train and compare 3 classification and 3 regression models with detailed diagnostics
+- **📋 Diagnostics** - Confusion matrices, residual plots, ROC curves for deep model analysis
+- **💾 Export Results** - Download cleaned datasets, trained models as pickle files, and HTML reports
 
 ## Installation
 
