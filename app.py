@@ -393,11 +393,11 @@ def apply_custom_styling():
 
     /* Increase sidebar width */
     [data-testid="stSidebar"] {
-        min-width: 350px;
-        width: 350px;
+        min-width: 250px !important;
+        background-color: var(--dark-bg-secondary) !important;
     }
 
-    [data-testid="stSidebarNav"] {
+    [data-testid="stSidebar"] [data-testid="stSidebarNav"] {
         padding-right: 1rem;
     }
 
