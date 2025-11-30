@@ -10,11 +10,6 @@ from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.metrics import confusion_matrix, accuracy_score, r2_score, roc_curve, auc, roc_auc_score
-try:
-    import shap
-    HAS_SHAP = True
-except ImportError:
-    HAS_SHAP = False
 from scipy import stats
 import io
 import pickle
@@ -43,8 +38,8 @@ if "tuned_models" not in st.session_state:
     st.session_state.tuned_models = {}
 if "tuning_results" not in st.session_state:
     st.session_state.tuning_results = {}
-if "shap_results" not in st.session_state:
-    st.session_state.shap_results = {}
+if "importance_results" not in st.session_state:
+    st.session_state.importance_results = None
 
 
 # Custom CSS Styling - Modern Dark Theme
@@ -515,28 +510,35 @@ def generate_ai_system_prompt(df=None):
     """Placeholder for AI prompt generation."""
     pass
 
-def get_feature_importance(model, feature_names):
-    """Extract feature importance from trained model."""
+def calculate_permutation_importance(model, X_test, y_test, feature_names):
+    """Calculate permutation-based feature importance.
+    Measures importance by how much model performance drops when feature is shuffled.
+    """
     try:
-        if hasattr(model, 'feature_importances_'):
-            importances = model.feature_importances_
-            importance_df = pd.DataFrame({
-                'Feature': feature_names,
-                'Importance': importances
-            }).sort_values('Importance', ascending=False)
-            return importance_df
-    except Exception:
-        pass
-    return None
+        from sklearn.inspection import permutation_importance
+        
+        result = permutation_importance(model, X_test, y_test, n_repeats=10, random_state=42, n_jobs=-1)
+        importance_df = pd.DataFrame({
+            'Feature': feature_names,
+            'Importance': result.importances_mean,
+            'Std Dev': result.importances_std
+        }).sort_values('Importance', ascending=False)
+        
+        return importance_df
+    except Exception as e:
+        st.error(f"Permutation importance calculation failed: {str(e)}")
+        return None
 
-def plot_feature_importance(importance_df, title="Feature Importance"):
-    """Create feature importance visualization."""
+def plot_permutation_importance(importance_df, title="Feature Importance (Permutation-based)"):
+    """Visualize permutation importance with error bars."""
     fig, ax = plt.subplots(figsize=(10, 6))
     fig.patch.set_facecolor('#1A1F2E')
     ax.set_facecolor('#252D3D')
     
     colors = plt.cm.Blues(np.linspace(0.4, 0.9, len(importance_df)))
-    bars = ax.barh(importance_df['Feature'], importance_df['Importance'], color=colors, edgecolor='#2D3748')
+    
+    ax.barh(importance_df['Feature'], importance_df['Importance'], 
+            xerr=importance_df['Std Dev'], color=colors, edgecolor='#2D3748', capsize=5)
     
     ax.set_xlabel('Importance Score', color='#E8EAED', fontweight='600')
     ax.set_ylabel('Features', color='#E8EAED', fontweight='600')
@@ -545,12 +547,6 @@ def plot_feature_importance(importance_df, title="Feature Importance"):
     
     for spine in ax.spines.values():
         spine.set_color('#2D3748')
-    
-    # Add value labels
-    for i, bar in enumerate(bars):
-        width = bar.get_width()
-        ax.text(width, bar.get_y() + bar.get_height()/2, 
-               f'{width:.3f}', ha='left', va='center', color='#E8EAED', fontsize=9, fontweight='500')
     
     plt.tight_layout()
     return fig
@@ -1117,89 +1113,6 @@ def engineer_features(df, numeric_cols, feature_type='polynomial', degree=2, int
         return df_engineered, new_features
     
     return df_engineered, []
-
-# ============================================================================
-# ADVANCED FEATURES - SHAP EXPLAINABILITY
-# ============================================================================
-
-def plot_shap_summary(model, X_train, X_test, model_type='tree'):
-    """
-    Generate SHAP summary plot for model explainability.
-    """
-    if not HAS_SHAP:
-        st.error("SHAP not installed. Install with: pip install shap")
-        return None
-    
-    fig, ax = plt.subplots(figsize=(12, 6))
-    
-    try:
-        # Create explainer based on model type
-        if model_type == 'tree' and hasattr(model, 'predict_proba'):
-            explainer = shap.TreeExplainer(model)
-        elif model_type == 'tree':
-            explainer = shap.TreeExplainer(model)
-        else:
-            # Fallback to KernelExplainer for other models
-            explainer = shap.KernelExplainer(model.predict, X_train.sample(min(50, len(X_train))))
-        
-        # Calculate SHAP values
-        shap_values = explainer.shap_values(X_test)
-        
-        # Handle multi-class case
-        if isinstance(shap_values, list):
-            shap_values = shap_values[0]
-        
-        plt.figure(figsize=(12, 6))
-        plt.style.use('dark_background')
-        
-        # Set dark background
-        fig = plt.gcf()
-        fig.set_facecolor('#0F1419')
-        
-        shap.summary_plot(shap_values, X_test, plot_type="bar", show=False)
-        plt.gcf().set_facecolor('#0F1419')
-        ax = plt.gca()
-        ax.set_facecolor('#1A1F2E')
-        
-        return fig
-    except Exception as e:
-        st.error(f"SHAP visualization error: {str(e)}")
-        return None
-
-def plot_shap_force(model, X_train, X_test, instance_idx=0, model_type='tree'):
-    """
-    Generate SHAP force plot for individual prediction explanation.
-    """
-    if not HAS_SHAP:
-        return None
-    
-    try:
-        # Create explainer
-        if model_type == 'tree' and hasattr(model, 'predict_proba'):
-            explainer = shap.TreeExplainer(model)
-        elif model_type == 'tree':
-            explainer = shap.TreeExplainer(model)
-        else:
-            explainer = shap.KernelExplainer(model.predict, X_train.sample(min(50, len(X_train))))
-        
-        # Calculate SHAP values
-        shap_values = explainer.shap_values(X_test)
-        
-        # Handle multi-class case
-        if isinstance(shap_values, list):
-            shap_values_instance = shap_values[0][instance_idx]
-        else:
-            shap_values_instance = shap_values[instance_idx]
-        
-        # Return SHAP values for streamlit display
-        return {
-            'shap_values': shap_values_instance,
-            'features': X_test.iloc[instance_idx],
-            'base_value': explainer.expected_value if not isinstance(explainer.expected_value, list) else explainer.expected_value[0]
-        }
-    except Exception as e:
-        st.error(f"SHAP force plot error: {str(e)}")
-        return None
 
 # ============================================================================
 # ADVANCED FEATURES - STATISTICAL SIGNIFICANCE TESTS
@@ -2307,34 +2220,6 @@ def page_model_training():
             with st.expander("📋 View engineered features"):
                 st.write(engineered_cols)
         
-        # Feature Importance (if available)
-        st.subheader("🎯 Feature Importance Analysis")
-        best_model_obj = st.session_state.trained_models[best_model]["model"]
-        importance_df = get_feature_importance(best_model_obj, selected_features)
-        
-        if importance_df is not None:
-            col1, col2 = st.columns([2, 1])
-            with col1:
-                importance_fig = plot_feature_importance(importance_df, f"Feature Importance ({best_model})")
-                st.pyplot(importance_fig, use_container_width=True)
-            
-            with col2:
-                st.write("**Importance Scores:**")
-                st.dataframe(importance_df, use_container_width=True)
-        else:
-            st.info("ℹ️ Feature importance not available for this model type (available for tree-based models only).")
-        
-        # Improvement Suggestions
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #2A3A4A 0%, #1A2A3A 100%); padding: 1.5rem; 
-                    border-radius: 10px; border-left: 4px solid #FFD700; margin: 2rem 0;">
-            <div style="color: #FFD700; font-weight: 600; margin-bottom: 0.5rem;">💡 Want Better Performance?</div>
-            <p style="color: #E8EAED; margin: 0; font-size: 0.95rem; line-height: 1.6;">
-                👇 <strong>Scroll down</strong> to optimize your model with hyperparameter tuning and SHAP explainability!
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
         # Advanced Features: Hyperparameter Tuning
         st.subheader("⚡ Hyperparameter Optimization")
         
@@ -2392,127 +2277,32 @@ def page_model_training():
         with tune_col2:
             st.info("ℹ️ Hyperparameter tuning uses GridSearchCV with 5-fold cross-validation to find optimal parameters that maximize model performance on your data.")
         
-        # Advanced Features: SHAP Explainability
-        st.subheader("🔬 Model Explainability (SHAP)")
+        # Advanced Features: Model Explainability
+        st.subheader("📊 Feature Importance Analysis")
         
-        if not HAS_SHAP:
-            st.warning("""
-            ⚠️ **SHAP is not installed** - but don't worry, the app works fine without it!
-            
-            **To enable SHAP model explanations:**
-            ```
-            pip install shap
-            ```
-            Then restart Streamlit with: `streamlit run app.py`
-            
-            **What does SHAP do?**
-            - Shows which features most influence each prediction
-            - Creates visual explanations (why did the model predict this?)
-            - Helps debug and understand model behavior
-            
-            **Optional:** You can continue using all other features without SHAP.
-            """)
-        else:
-            st.markdown("""
-            **What is SHAP?**
-            - SHAP (SHapley Additive exPlanations) is a game-theoretic approach to explain predictions
-            - Shows how much each feature contributes to the final prediction (positive or negative)
-            - Different from feature importance: shows per-prediction explanations, not just overall importance
-            
-            **Summary Plot** 👈 Shows feature importance across all predictions
-            - Horizontal axis: Impact on model prediction
-            - Each dot: One data sample
-            - Red dots going right: Feature increases prediction
-            - Blue dots going left: Feature decreases prediction
-            
-            **Individual Explanation** 👈 Shows why one specific prediction was made
-            - Select a sample and see its feature values
-            - Shows SHAP value for each feature (contribution to prediction)
-            """)
-            
-            shap_col1, shap_col2 = st.columns([1, 1])
-            
-            with shap_col1:
-                st.write("**Feature Importance via SHAP:**")
-                if best_model in st.session_state.trained_models:
-                    if st.button("📊 Generate SHAP Summary", use_container_width=True, key="shap_summary_btn"):
-                        try:
-                            with st.spinner("🔄 Generating SHAP summary plot (this may take 10-30 seconds)..."):
-                                best_model_obj = st.session_state.trained_models[best_model]["model"]
-                                model_type = 'tree' if 'Forest' in best_model or 'Tree' in best_model else 'linear'
-                                
-                                # Sample data if too large
-                                X_test_sample = X_test.sample(min(100, len(X_test)), random_state=42)
-                                
-                                shap_fig = plot_shap_summary(best_model_obj, X_train.sample(min(50, len(X_train)), random_state=42), 
-                                                            X_test_sample, model_type)
-                                
-                                if shap_fig is not None:
-                                    st.session_state.shap_results['summary'] = shap_fig
-                                    st.success("✓ SHAP summary plot generated!")
-                        except Exception as e:
-                            st.error(f"⚠️ SHAP visualization error: {str(e)}")
+        best_model_obj = st.session_state.trained_models[best_model]["model"]
+        y_test = st.session_state.trained_models[best_model]["y_test"]
+        
+        if st.button("🔍 Calculate Feature Importance", use_container_width=True, key="importance_btn"):
+            with st.spinner("Calculating permutation importance (this measures how important each feature is)..."):
+                importance_df = calculate_permutation_importance(best_model_obj, X_test, y_test, selected_features)
                 
-                # Display SHAP summary if it exists in session state
-                if 'summary' in st.session_state.shap_results:
-                    st.pyplot(st.session_state.shap_results['summary'], use_container_width=True)
+                if importance_df is not None:
+                    st.session_state.importance_results = importance_df
+                    st.success("✅ Feature importance calculated!")
+        
+        # Display importance results if they exist in session state
+        if st.session_state.importance_results is not None:
+            importance_df = st.session_state.importance_results
+            col1, col2 = st.columns([2, 1])
             
-            with shap_col2:
-                st.write("**Individual Prediction Explanation:**")
-                if best_model in st.session_state.trained_models:
-                    # Show sample statistics to help selection
-                    sample_stats_col1, sample_stats_col2, sample_stats_col3 = st.columns(3)
-                    with sample_stats_col1:
-                        st.metric("📊 Total Samples", len(X_test))
-                    with sample_stats_col2:
-                        correct = (st.session_state.trained_models[best_model]["y_pred"] == st.session_state.trained_models[best_model]["y_test"]).sum()
-                        st.metric("✅ Correct", correct)
-                    with sample_stats_col3:
-                        incorrect = (st.session_state.trained_models[best_model]["y_pred"] != st.session_state.trained_models[best_model]["y_test"]).sum()
-                        st.metric("❌ Incorrect", incorrect)
-                    
-                    pred_idx = st.number_input("Select sample index (0 to {}):".format(len(X_test)-1), 
-                                              min_value=0, max_value=len(X_test)-1, value=0, step=1, key="shap_idx")
-                    
-                    # Preview sample
-                    st.info(f"👀 Sample {pred_idx} values: {dict(zip(X_test.columns[:3], X_test.iloc[pred_idx].values[:3]))}...")
-                    
-                    if st.button("📈 Explain Prediction", use_container_width=True, key="shap_force_btn"):
-                        try:
-                            with st.spinner("Generating SHAP force plot..."):
-                                best_model_obj = st.session_state.trained_models[best_model]["model"]
-                                model_type = 'tree' if 'Forest' in best_model or 'Tree' in best_model else 'linear'
-                                
-                                shap_explanation = plot_shap_force(best_model_obj, 
-                                                                  X_train.sample(min(50, len(X_train)), random_state=42), 
-                                                                  X_test, pred_idx, model_type)
-                                
-                                if shap_explanation is not None:
-                                    st.session_state.shap_results['explanation'] = {
-                                        'idx': pred_idx,
-                                        'explanation': shap_explanation
-                                    }
-                                    st.success("✓ Explanation Generated!")
-                        except Exception as e:
-                            st.error(f"⚠️ SHAP explanation error: {str(e)}")
-                
-                # Display SHAP explanation if it exists in session state
-                if 'explanation' in st.session_state.shap_results:
-                    result = st.session_state.shap_results['explanation']
-                    shap_explanation = result['explanation']
-                    pred_idx = result['idx']
-                    
-                    sample = X_test.iloc[pred_idx]
-                    st.markdown(f"**Sample #{pred_idx} - Feature Values:**")
-                    st.dataframe(pd.DataFrame([sample]), use_container_width=True)
-                    
-                    st.markdown(f"**SHAP Values (Feature Contributions):**")
-                    shap_contrib = pd.DataFrame({
-                        'Feature': X_test.columns,
-                        'Value': sample.values,
-                        'SHAP Impact': shap_explanation['shap_values']
-                    })
-                    st.dataframe(shap_contrib.sort_values('SHAP Impact', key=abs, ascending=False), use_container_width=True)
+            with col1:
+                fig = plot_permutation_importance(importance_df, f"Feature Importance ({best_model})")
+                st.pyplot(fig, use_container_width=True)
+            
+            with col2:
+                st.write("**Importance Scores:**")
+                st.dataframe(importance_df, use_container_width=True)
         
         
         # Report Export
@@ -2521,7 +2311,7 @@ def page_model_training():
         stat_summary = get_statistical_summary(st.session_state.df)
         
         html_report = generate_html_report(st.session_state.df, profile, stat_summary, 
-                                           trained_models=model_instances, mode=mode)
+                                           trained_models=st.session_state.trained_models, mode=mode)
         
         st.download_button(
             label="📥 Download HTML Report",
