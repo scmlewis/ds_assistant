@@ -1,4 +1,10 @@
 import streamlit as st
+
+# Page Configuration - MUST be first Streamlit command
+import config
+st.set_page_config(page_title=config.PAGE_TITLE, layout="wide")
+
+# Now import other modules
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,10 +20,6 @@ from scipy import stats
 import io
 import pickle
 from streamlit_option_menu import option_menu
-import config
-
-# Page Configuration
-st.set_page_config(page_title=config.PAGE_TITLE, layout="wide")
 
 # Initialize Session State
 if "current_step" not in st.session_state:
