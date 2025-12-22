@@ -1,8 +1,7 @@
 import streamlit as st
 
 # Page Configuration - MUST be first Streamlit command
-import config
-st.set_page_config(page_title=config.PAGE_TITLE, layout="wide")
+st.set_page_config(page_title="AI Data Science Assistant", layout="wide")
 
 # Now import other modules
 import pandas as pd
@@ -20,6 +19,7 @@ from scipy import stats
 import io
 import pickle
 from streamlit_option_menu import option_menu
+import config
 
 # Initialize Session State
 if "current_step" not in st.session_state:
