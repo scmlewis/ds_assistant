@@ -70,11 +70,31 @@ def apply_custom_styling():
     /* Sidebar */
     [data-testid="stSidebar"] {
         background-color: var(--dark-bg-secondary) !important;
-        border-right: 1px solid var(--border-color);
+        border-right: 2px solid var(--border-color);
+        transition: all 0.3s ease;
     }
 
     [data-testid="stSidebar"] > div:first-child {
         background-color: var(--dark-bg-secondary) !important;
+    }
+
+    /* Sidebar width optimization */
+    [data-testid="stSidebar"] {
+        min-width: 280px;
+        max-width: 320px;
+    }
+
+    /* Sidebar section headers */
+    [data-testid="stSidebar"] .sidebar-section-title {
+        color: var(--accent-blue);
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 1.5rem 0 0.75rem 0;
+        margin-top: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.75rem;
     }
 
     /* Main content area */
@@ -314,18 +334,41 @@ def apply_custom_styling():
 
     /* Expander */
     [data-testid="stExpander"] > div > button {
-        background-color: var(--dark-bg-tertiary);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        color: var(--text-primary);
-        font-weight: 600;
-        padding: 1rem;
-        transition: all 0.2s ease;
+        background-color: var(--dark-bg-tertiary) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        color: var(--text-primary) !important;
+        font-weight: 600 !important;
+        padding: 1rem !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
 
     [data-testid="stExpander"] > div > button:hover {
-        background-color: var(--dark-bg-secondary);
-        border-color: var(--accent-blue);
+        background-color: var(--dark-bg-secondary) !important;
+        border-color: var(--accent-blue) !important;
+        box-shadow: 0 4px 12px rgba(91, 127, 255, 0.2) !important;
+        transform: translateX(2px);
+    }
+
+    [data-testid="stExpander"] > div > button:focus {
+        outline: none;
+        border-color: var(--accent-blue) !important;
+    }
+
+    /* Expander content */
+    [data-testid="stExpander"] > div > div {
+        animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     /* Divider */
@@ -2117,8 +2160,21 @@ def page_model_training():
 # MAIN APP
 # ============================================================================
 
-# Sidebar Navigation
+# Sidebar Navigation with Optimized Styling
 with st.sidebar:
+    # Sidebar Header
+    st.markdown("""
+    <div style="
+        padding: 1.5rem 0 1rem 0;
+        text-align: center;
+        border-bottom: 2px solid #5B7FFF;
+        margin-bottom: 1.5rem;
+    ">
+        <h2 style="margin: 0; color: #E8EAED; font-size: 1.3rem;">🚀 Navigation</h2>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Main Navigation Menu
     selected = option_menu(
         menu_title=None,
         options=config.STEP_NAMES,
@@ -2127,23 +2183,34 @@ with st.sidebar:
         orientation="vertical",
         key="main_menu",
         styles={
-            "container": {"padding": "0.5rem!important", "background-color": "#1A1F2E"},
-            "icon": {"color": "#5B7FFF", "font-size": "22px"},
+            "container": {
+                "padding": "0.75rem 0 !important",
+                "background-color": "#1A1F2E",
+                "border-radius": "0px"
+            },
+            "icon": {
+                "color": "#5B7FFF",
+                "font-size": "20px"
+            },
             "nav-link": {
-                "font-size": "16px",
+                "font-size": "15px",
                 "text-align": "left",
                 "margin": "0.5rem 0",
                 "--hover-color": "#252D3D",
-                "color": "#E8EAED",
+                "color": "#9CA3AF",
                 "border-radius": "8px",
-                "padding": "0.75rem 1rem",
-                "font-weight": "500"
+                "padding": "0.85rem 1rem",
+                "font-weight": "500",
+                "border": "1px solid transparent",
+                "transition": "all 0.2s ease"
             },
             "nav-link-selected": {
-                "background-color": "#5B7FFF",
-                "color": "white",
+                "background: linear-gradient(90deg, #5B7FFF 0%, #7B9FFF 100%) !important",
+                "color": "white !important",
                 "border-radius": "8px",
-                "font-weight": "600"
+                "font-weight": "700",
+                "border": "1px solid #5B7FFF",
+                "box-shadow": "0 4px 12px rgba(91, 127, 255, 0.3)"
             }
         }
     )
@@ -2154,11 +2221,31 @@ with st.sidebar:
             st.session_state.current_step = i
             break
     
+    # Sidebar Help Section
+    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
     st.divider()
+    
     st.markdown(f"""
-    <div class="help-box">
-        <strong>Current Step:</strong> {config.STEP_NAMES[st.session_state.current_step]}<br><br>
-        {config.HELP_TEXTS[st.session_state.current_step]}
+    <div class="help-box" style="margin-top: 1rem;">
+        <strong style="color: #5B7FFF;">📍 Current Step</strong><br><br>
+        <span style="font-size: 0.95rem;">{config.STEP_NAMES[st.session_state.current_step]}</span>
+        <hr style="margin: 1rem 0; border: none; border-top: 1px solid rgba(91, 127, 255, 0.2);">
+        <span style="font-size: 0.85rem; line-height: 1.5;">{config.HELP_TEXTS[st.session_state.current_step]}</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Sidebar Footer
+    st.markdown("""
+    <div style="
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid #2D3748;
+        text-align: center;
+        color: #9CA3AF;
+        font-size: 0.8rem;
+    ">
+        <p style="margin: 0.5rem 0;">AI Data Science Assistant</p>
+        <p style="margin: 0.5rem 0; opacity: 0.7;">v1.0.0</p>
     </div>
     """, unsafe_allow_html=True)
 
