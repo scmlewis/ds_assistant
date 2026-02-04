@@ -70,31 +70,11 @@ def apply_custom_styling():
     /* Sidebar */
     [data-testid="stSidebar"] {
         background-color: var(--dark-bg-secondary) !important;
-        border-right: 2px solid var(--border-color);
-        transition: all 0.3s ease;
+        border-right: 1px solid var(--border-color);
     }
 
     [data-testid="stSidebar"] > div:first-child {
         background-color: var(--dark-bg-secondary) !important;
-    }
-
-    /* Sidebar width optimization */
-    [data-testid="stSidebar"] {
-        min-width: 280px;
-        max-width: 320px;
-    }
-
-    /* Sidebar section headers */
-    [data-testid="stSidebar"] .sidebar-section-title {
-        color: var(--accent-blue);
-        font-weight: 700;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        padding: 1.5rem 0 0.75rem 0;
-        margin-top: 1rem;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 0.75rem;
     }
 
     /* Main content area */
@@ -2205,7 +2185,7 @@ with st.sidebar:
                 "transition": "all 0.2s ease"
             },
             "nav-link-selected": {
-                "background: linear-gradient(90deg, #5B7FFF 0%, #7B9FFF 100%) !important",
+                "background": "linear-gradient(90deg, #5B7FFF 0%, #7B9FFF 100%) !important",
                 "color": "white !important",
                 "border-radius": "8px",
                 "font-weight": "700",
