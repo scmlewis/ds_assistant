@@ -20,6 +20,7 @@ import io
 import pickle
 from streamlit_option_menu import option_menu
 import config
+import core
 
 # Initialize Session State
 if "current_step" not in st.session_state:
@@ -421,34 +422,6 @@ apply_custom_styling()
 # CORE FUNCTIONS
 # ============================================================================
 
-def validate_data_for_modeling(X, y):
-    """Validate data before model training."""
-    # Check for NaN in features
-    if X.isna().any().any():
-        return False, "❌ Features contain missing values. Please clean data first."
-    
-    # Check for NaN in target
-    if y.isna().any():
-        return False, "❌ Target contains missing values. Please clean data first."
-    
-    # Check for infinite values in features
-    if np.isinf(X.select_dtypes(include=[np.number])).any().any():
-        return False, "❌ Features contain infinite values. Please clean data first."
-    
-    # Check for infinite values in target
-    if np.isinf(y).any():
-        return False, "❌ Target contains infinite values. Please clean data first."
-    
-    # Check if data is empty
-    if len(X) == 0 or len(y) == 0:
-        return False, "❌ No data available for training."
-    
-    # Check if lengths match
-    if len(X) != len(y):
-        return False, "❌ Feature and target length mismatch."
-    
-    return True, "✅ Data validation passed"
-
 def load_sample_dataset(dataset_name):
     """Load built-in datasets from sklearn."""
     if dataset_name == "iris":
@@ -603,19 +576,6 @@ def get_missing_value_heatmap(df):
     
     plt.tight_layout()
     return fig
-
-def get_statistical_summary(df):
-    """Generate statistical summary table for numeric columns."""
-    numeric_df = df.select_dtypes(include=[np.number])
-    
-    if len(numeric_df.columns) == 0:
-        return None
-    
-    summary = numeric_df.describe().T
-    summary['IQR'] = summary['75%'] - summary['25%']
-    summary['Range'] = summary['max'] - summary['min']
-    
-    return summary[['count', 'mean', '50%', 'std', 'min', '25%', '75%', 'max', 'IQR', 'Range']]
 
 def generate_html_report(df, profile, stat_summary, trained_models=None, mode=None):
     """Generate comprehensive HTML report with all analysis."""
@@ -1022,7 +982,14 @@ def calculate_correlation_significance(df, numeric_cols):
                 corr_matrix[i, j] = 1.0
                 pval_matrix[i, j] = 0.0
             else:
-                corr, pval = stats.pearsonr(df[col1].dropna(), df[col2].dropna())
+                paired = df[[col1, col2]].dropna()
+                if len(paired) < 2 or paired[col1].nunique() < 2 or paired[col2].nunique() < 2:
+                    corr, pval = np.nan, np.nan
+                else:
+                    try:
+                        corr, pval = stats.pearsonr(paired[col1], paired[col2])
+                    except Exception:
+                        corr, pval = np.nan, np.nan
                 corr_matrix[i, j] = corr
                 pval_matrix[i, j] = pval
     
@@ -1035,7 +1002,7 @@ def plot_correlation_with_significance(df, numeric_cols):
     """
     Plot correlation matrix with significance annotations.
     """
-    corr_df, pval_df = calculate_correlation_significance(df, numeric_cols)
+    corr_df, pval_df = core.calculate_correlation_significance(df, numeric_cols)
     
     fig, ax = plt.subplots(figsize=(12, 10))
     fig.set_facecolor('#0F1419')
@@ -1064,37 +1031,61 @@ def perform_hypothesis_test(df, col1, col2, test_type='pearson'):
     """
     Perform hypothesis test on two variables.
     """
-    valid_data_1 = df[col1].dropna()
-    valid_data_2 = df[col2].dropna()
-    
-    if test_type == 'pearson':
-        corr, pval = stats.pearsonr(valid_data_1, valid_data_2)
-        result = {
-            'Test': 'Pearson Correlation',
-            'Correlation': corr,
-            'P-value': pval,
-            'Significant': 'Yes ✓' if pval < 0.05 else 'No ✗',
-            'Sample Size': min(len(valid_data_1), len(valid_data_2))
-        }
-    elif test_type == 'spearman':
-        corr, pval = stats.spearmanr(valid_data_1, valid_data_2)
-        result = {
-            'Test': 'Spearman Correlation',
-            'Correlation': corr,
-            'P-value': pval,
-            'Significant': 'Yes ✓' if pval < 0.05 else 'No ✗',
-            'Sample Size': min(len(valid_data_1), len(valid_data_2))
-        }
+    if test_type in {'pearson', 'spearman'}:
+        paired = df[[col1, col2]].dropna()
+        if len(paired) < 2 or paired[col1].nunique() < 2 or paired[col2].nunique() < 2:
+            result = {
+                'Test': 'Pearson Correlation' if test_type == 'pearson' else 'Spearman Correlation',
+                'Correlation': np.nan,
+                'P-value': np.nan,
+                'Significant': 'N/A',
+                'Sample Size': len(paired)
+            }
+        else:
+            try:
+                if test_type == 'pearson':
+                    corr, pval = stats.pearsonr(paired[col1], paired[col2])
+                    test_label = 'Pearson Correlation'
+                else:
+                    corr, pval = stats.spearmanr(paired[col1], paired[col2])
+                    test_label = 'Spearman Correlation'
+                result = {
+                    'Test': test_label,
+                    'Correlation': corr,
+                    'P-value': pval,
+                    'Significant': 'Yes ✓' if pval < 0.05 else 'No ✗',
+                    'Sample Size': len(paired)
+                }
+            except Exception:
+                result = {
+                    'Test': 'Pearson Correlation' if test_type == 'pearson' else 'Spearman Correlation',
+                    'Correlation': np.nan,
+                    'P-value': np.nan,
+                    'Significant': 'N/A',
+                    'Sample Size': len(paired)
+                }
     elif test_type == 'ttest':
-        stat, pval = stats.ttest_ind(valid_data_1, valid_data_2)
-        result = {
-            'Test': 'Independent T-Test',
-            'T-Statistic': stat,
-            'P-value': pval,
-            'Significant': 'Yes ✓' if pval < 0.05 else 'No ✗',
-            'Sample Size 1': len(valid_data_1),
-            'Sample Size 2': len(valid_data_2)
-        }
+        valid_data_1 = df[col1].dropna()
+        valid_data_2 = df[col2].dropna()
+        if len(valid_data_1) < 2 or len(valid_data_2) < 2:
+            result = {
+                'Test': 'Independent T-Test',
+                'T-Statistic': np.nan,
+                'P-value': np.nan,
+                'Significant': 'N/A',
+                'Sample Size 1': len(valid_data_1),
+                'Sample Size 2': len(valid_data_2)
+            }
+        else:
+            stat, pval = stats.ttest_ind(valid_data_1, valid_data_2)
+            result = {
+                'Test': 'Independent T-Test',
+                'T-Statistic': stat,
+                'P-value': pval,
+                'Significant': 'Yes ✓' if pval < 0.05 else 'No ✗',
+                'Sample Size 1': len(valid_data_1),
+                'Sample Size 2': len(valid_data_2)
+            }
     else:
         result = {}
     
@@ -1340,7 +1331,7 @@ def upload_and_schema():
         
         # Statistical Summary
         st.subheader("📊 Statistical Summary")
-        stat_summary = get_statistical_summary(st.session_state.df)
+        stat_summary = core.get_statistical_summary(st.session_state.df)
         if stat_summary is not None:
             st.dataframe(stat_summary, use_container_width=True)
         else:
@@ -1517,10 +1508,13 @@ def clean_data():
     
     with col1:
         if st.button("✔️ Apply", use_container_width=True, key="apply_clean"):
-            st.session_state.df = st.session_state.pending_df.copy()
-            st.balloons()
-            st.success("✅ Cleaning applied successfully! Your data has been updated.")
-            st.rerun()
+            if st.session_state.pending_df is None:
+                st.error("❌ No preview available. Please adjust cleaning options first.")
+            else:
+                st.session_state.df = st.session_state.pending_df.copy()
+                st.balloons()
+                st.success("✅ Cleaning applied successfully! Your data has been updated.")
+                st.rerun()
     
     with col2:
         if st.button("↩️ Revert", use_container_width=True, key="revert_clean"):
@@ -1531,14 +1525,17 @@ def clean_data():
     
     with col3:
         if st.button("💾 Download", use_container_width=True, key="download_clean"):
-            csv = st.session_state.pending_df.to_csv(index=False)
-            st.download_button(
-                label="📥 Download CSV",
-                data=csv,
-                file_name="cleaned_data.csv",
-                mime="text/csv",
-                use_container_width=True
-            )
+            if st.session_state.pending_df is None:
+                st.error("❌ No preview available. Please adjust cleaning options first.")
+            else:
+                csv = st.session_state.pending_df.to_csv(index=False)
+                st.download_button(
+                    label="📥 Download CSV",
+                    data=csv,
+                    file_name="cleaned_data.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
     
     # Suggested Workflow Banner
     st.markdown("""
@@ -1699,7 +1696,7 @@ def visualize_data():
                 if st.button("🔍 Run Test", use_container_width=True, key="run_test"):
                     if var1 != var2:
                         with st.spinner("Running statistical test..."):
-                            result = perform_hypothesis_test(st.session_state.df, var1, var2, test_type)
+                            result = core.perform_hypothesis_test(st.session_state.df, var1, var2, test_type)
                         st.dataframe(result.to_frame().T, use_container_width=True)
                         
                         # Interpretation
@@ -1927,7 +1924,7 @@ def page_model_training():
         y = st.session_state.df[target_column]
         
         # Validate data
-        is_valid, message = validate_data_for_modeling(X, y)
+        is_valid, message = core.validate_data_for_modeling(X, y)
         if not is_valid:
             st.error(message)
             return
@@ -1983,7 +1980,8 @@ def page_model_training():
                 
                 # Get probability predictions for classification (for ROC curve)
                 y_pred_proba = None
-                if mode == "Classification" and hasattr(model, 'predict_proba'):
+                is_binary = mode == "Classification" and unique_y == 2
+                if is_binary and hasattr(model, 'predict_proba'):
                     y_pred_proba = model.predict_proba(X_test)[:, 1]
                 
                 # Calculate metrics
@@ -2008,7 +2006,8 @@ def page_model_training():
                     "y_pred": y_pred,
                     "y_pred_proba": y_pred_proba,
                     "cv_scores": cv_scores,
-                    "mode": mode
+                    "mode": mode,
+                    "is_binary": is_binary
                 }
         
         progress_bar.empty()
@@ -2086,11 +2085,14 @@ def page_model_training():
                 for spine in ax.spines.values():
                     spine.set_color('#2D3748')
                 st.pyplot(fig, use_container_width=True)
-            elif mode == "Classification" and st.session_state.trained_models[best_model]["y_pred_proba"] is not None:
-                st.write("**ROC Curve (Best Model)**")
+            elif mode == "Classification":
                 best_model_data = st.session_state.trained_models[best_model]
-                roc_fig, roc_auc = plot_roc_curve(best_model_data["y_test"], best_model_data["y_pred_proba"], best_model)
-                st.pyplot(roc_fig, use_container_width=True)
+                if best_model_data.get("is_binary") and best_model_data["y_pred_proba"] is not None:
+                    st.write("**ROC Curve (Best Model)**")
+                    roc_fig, roc_auc = plot_roc_curve(best_model_data["y_test"], best_model_data["y_pred_proba"], best_model)
+                    st.pyplot(roc_fig, use_container_width=True)
+                else:
+                    st.info("ℹ️ ROC curve is available only for binary classification with probability outputs.")
         
         # Sample Predictions
         st.subheader("📋 Sample Predictions")
@@ -2112,7 +2114,7 @@ def page_model_training():
         # Report Export
         st.subheader("📄 Export Report")
         profile, col_profile = generate_data_profile(st.session_state.df)
-        stat_summary = get_statistical_summary(st.session_state.df)
+        stat_summary = core.get_statistical_summary(st.session_state.df)
         
         html_report = generate_html_report(st.session_state.df, profile, stat_summary, 
                                            trained_models=st.session_state.trained_models, mode=mode)
