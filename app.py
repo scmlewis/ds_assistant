@@ -124,13 +124,12 @@ def apply_custom_styling():
     }
 
     h2 {
-        color: var(--text-primary);
-        font-weight: 600;
-        font-size: 1.25rem;
-        margin: 2rem 0 1.25rem 0;
-        letter-spacing: -0.2px;
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 0.75rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin: 2rem 0 1rem 0;
     }
 
     h3 {
@@ -1083,48 +1082,14 @@ def landing_page():
     """, unsafe_allow_html=True)
     
     st.markdown("""
-    <div style="text-align: center; margin: -0.5rem 0 3rem 0;">
+    <div style="text-align: center; margin: -0.5rem 0 2.5rem 0;">
         <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0; font-weight: 400;">
             Go from raw CSV to trained model without writing code.
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Workflow — horizontal steps
-    st.markdown("<h2>Workflow</h2>", unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div style="display: flex; gap: 0; margin-bottom: 2.5rem;">
-        <div style="flex: 1; padding: 1rem 1.25rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px 0 0 8px; text-align: center;">
-            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 1</div>
-            <div style="color: var(--text-primary); font-weight: 500; font-size: 0.92rem;">Upload</div>
-            <div style="color: var(--text-tertiary); font-size: 0.8rem; margin-top: 0.25rem;">CSV or sample dataset</div>
-        </div>
-        <div style="flex: 1; padding: 1rem 1.25rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-left: none; text-align: center;">
-            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 2</div>
-            <div style="color: var(--text-primary); font-weight: 500; font-size: 0.92rem;">Clean</div>
-            <div style="color: var(--text-tertiary); font-size: 0.8rem; margin-top: 0.25rem;">Dedup, impute, scale</div>
-        </div>
-        <div style="flex: 1; padding: 1rem 1.25rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-left: none; text-align: center;">
-            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 3</div>
-            <div style="color: var(--text-primary); font-weight: 500; font-size: 0.92rem;">Visualize</div>
-            <div style="color: var(--text-tertiary); font-size: 0.8rem; margin-top: 0.25rem;">Correlations, charts</div>
-        </div>
-        <div style="flex: 1; padding: 1rem 1.25rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-left: none; text-align: center;">
-            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 4</div>
-            <div style="color: var(--text-primary); font-weight: 500; font-size: 0.92rem;">Train</div>
-            <div style="color: var(--text-tertiary); font-size: 0.8rem; margin-top: 0.25rem;">Compare models</div>
-        </div>
-        <div style="flex: 1; padding: 1rem 1.25rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-left: none; border-radius: 0 8px 8px 0; text-align: center;">
-            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 5</div>
-            <div style="color: var(--text-primary); font-weight: 500; font-size: 0.92rem;">Export</div>
-            <div style="color: var(--text-tertiary); font-size: 0.8rem; margin-top: 0.25rem;">Data, model, report</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
     # Features — uniform 2-column grid
-    st.markdown("<h2>Capabilities</h2>", unsafe_allow_html=True)
     
     col_a, col_b = st.columns(2)
     
@@ -1177,7 +1142,6 @@ def landing_page():
     """, unsafe_allow_html=True)
     
     # Tips — condensed into a single box
-    st.markdown("<h2>Tips</h2>", unsafe_allow_html=True)
     
     st.markdown("""
     <div style="background: var(--bg-surface); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); font-size: 0.88rem; color: var(--text-secondary); line-height: 1.8;">
@@ -2061,12 +2025,6 @@ def page_model_training():
 
 # Sidebar Navigation
 with st.sidebar:
-    st.markdown("""
-    <div style="padding: 1.25rem 0 1rem 0; text-align: center; border-bottom: 1px solid #282c34; margin-bottom: 1.25rem;">
-        <h2 style="margin: 0; color: #dfe2e8; font-size: 1.1rem; font-weight: 500;">Navigation</h2>
-    </div>
-    """, unsafe_allow_html=True)
-    
     selected = option_menu(
         menu_title=None,
         options=config.STEP_NAMES,
@@ -2076,7 +2034,7 @@ with st.sidebar:
         key="main_menu",
         styles={
             "container": {
-                "padding": "0.5rem 0 !important",
+                "padding": "0 !important",
                 "background-color": "#181b22",
                 "border-radius": "0px"
             },
@@ -2085,15 +2043,14 @@ with st.sidebar:
                 "font-size": "18px"
             },
             "nav-link": {
-                "font-size": "0.9rem",
+                "font-size": "0.85rem",
                 "text-align": "left",
-                "margin": "0.35rem 0",
+                "margin": "0.2rem 0",
                 "color": "#8b9099",
                 "border-radius": "6px",
-                "padding": "0.7rem 1rem",
+                "padding": "0.55rem 1rem",
                 "font-weight": "400",
-                "border": "1px solid transparent",
-                "transition": "color 0.15s ease, background-color 0.15s ease"
+                "border": "1px solid transparent"
             },
             "nav-link-selected": {
                 "background": "#252830 !important",
@@ -2109,27 +2066,6 @@ with st.sidebar:
         if selected == name:
             st.session_state.current_step = i
             break
-    
-    # Step progress indicator
-    current = st.session_state.current_step
-    total = len(config.STEP_NAMES)
-    st.markdown(f"""
-    <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-surface); border-radius: 6px; border: 1px solid var(--border-subtle);">
-        <div style="display: flex; gap: 4px; margin-bottom: 0.5rem;">
-            {"".join(f'<div style="flex: 1; height: 3px; border-radius: 2px; background: {"var(--accent)" if i <= current else "var(--border)"};"></div>' for i in range(total))}
-        </div>
-        <div style="color: var(--text-tertiary); font-size: 0.75rem; font-weight: 500;">
-            Step {current + 1} of {total}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div style="margin-top: 1.5rem; padding-top: 0.75rem; border-top: 1px solid #282c34; text-align: center; color: #5c6068; font-size: 0.75rem;">
-        <p style="margin: 0.35rem 0;">AI Data Science Assistant</p>
-        <p style="margin: 0.35rem 0; opacity: 0.7;">v1.0.0</p>
-    </div>
-    """, unsafe_allow_html=True)
 
 # Route to current page
 if st.session_state.current_step == 0:
