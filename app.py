@@ -1123,12 +1123,12 @@ def landing_page():
     </div>
     """, unsafe_allow_html=True)
     
-    # Features — asymmetric 2-column with varied card sizes
+    # Features — uniform 2-column grid
     st.markdown("<h2>Capabilities</h2>", unsafe_allow_html=True)
     
-    col_main, col_side = st.columns([3, 2])
+    col_a, col_b = st.columns(2)
     
-    with col_main:
+    with col_a:
         st.markdown("""
         <div style="background: var(--bg-surface); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); margin-bottom: 0.75rem;">
             <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Data profiling</div>
@@ -1147,7 +1147,7 @@ def landing_page():
         </div>
         """, unsafe_allow_html=True)
     
-    with col_side:
+    with col_b:
         st.markdown("""
         <div style="background: var(--bg-surface); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); margin-bottom: 0.75rem;">
             <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Cleaning</div>
@@ -1165,15 +1165,16 @@ def landing_page():
             </p>
         </div>
         """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <div style="background: var(--bg-surface); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); margin-bottom: 0.75rem;">
-            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Export</div>
-            <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem; line-height: 1.6;">
-                Download cleaned data as CSV, trained models as pickle, and a full HTML analysis report.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+    
+    # Export — full width
+    st.markdown("""
+    <div style="background: var(--bg-surface); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); margin-bottom: 0.75rem;">
+        <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Export</div>
+        <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem; line-height: 1.6;">
+            Download cleaned data as CSV, trained models as pickle, and a full HTML analysis report.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # Tips — condensed into a single box
     st.markdown("<h2>Tips</h2>", unsafe_allow_html=True)
