@@ -1,7 +1,14 @@
 import streamlit as st
 
 # Page Configuration - MUST be first Streamlit command
-st.set_page_config(page_title="AI Data Science Assistant", layout="wide")
+st.set_page_config(page_title="AI Data Science Assistant", layout="wide", page_icon=":bar_chart:")
+
+# Load Outfit font from Google Fonts
+st.markdown("""
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+""", unsafe_allow_html=True)
 
 # Now import other modules
 import pandas as pd
@@ -39,65 +46,72 @@ if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
 
 
-# Custom CSS Styling - Modern Dark Theme
+# Custom CSS Styling
 def apply_custom_styling():
     custom_css = """
     <style>
-    /* Modern Dark Theme Colors */
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
     :root {
-        --dark-bg: #0F1419;
-        --dark-bg-secondary: #1A1F2E;
-        --dark-bg-tertiary: #252D3D;
-        --accent-blue: #5B7FFF;
-        --accent-blue-light: #7B9FFF;
-        --text-primary: #E8EAED;
-        --text-secondary: #9CA3AF;
-        --border-color: #2D3748;
-        --hover-bg: #1F2937;
-        --success-color: #34D399;
-        --error-color: #F87171;
-        --warning-color: #FBBF24;
+        --bg-primary: #111318;
+        --bg-secondary: #181b22;
+        --bg-surface: #1e2129;
+        --bg-elevated: #252830;
+        --accent: #6b8aed;
+        --accent-muted: #4e6bc2;
+        --text-primary: #dfe2e8;
+        --text-secondary: #8b9099;
+        --text-tertiary: #5c6068;
+        --border: #282c34;
+        --border-subtle: #1f2229;
+        --success: #4ade80;
+        --error: #f87171;
+        --warning: #facc15;
     }
 
     * {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     html, body, [data-testid="stAppViewContainer"] {
-        background-color: var(--dark-bg);
+        background-color: var(--bg-primary);
         color: var(--text-primary);
     }
 
-    /* Sidebar */
-    [data-testid="stSidebar"] {
-        background-color: var(--dark-bg-secondary) !important;
-        border-right: 1px solid var(--border-color);
-    }
-
-    [data-testid="stSidebar"] > div:first-child {
-        background-color: var(--dark-bg-secondary) !important;
-    }
-
-    /* Main content area */
+    /* Content container — max width */
     [data-testid="stAppViewContainer"] > section {
         padding: 2rem 2rem;
         max-width: 100%;
     }
 
-    /* App header */
+    .block-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-top: 2rem;
+    }
+
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background-color: var(--bg-secondary) !important;
+        border-right: 1px solid var(--border);
+    }
+
+    [data-testid="stSidebar"] > div:first-child {
+        background-color: var(--bg-secondary) !important;
+    }
+
+    /* Page header — flat, no gradient */
     .app-header {
-        background: linear-gradient(135deg, #1A2A4A 0%, #0F1419 100%);
-        padding: 2.5rem;
-        border-radius: 12px;
-        margin: 0 0 2.5rem 0;
-        border: 1px solid var(--border-color);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        padding: 1.75rem 2rem;
+        border-radius: 10px;
+        margin: 0 0 2rem 0;
+        border: 1px solid var(--border-subtle);
+        background-color: var(--bg-secondary);
     }
 
     .app-title {
-        font-size: 2.5rem;
+        font-size: 2rem;
         font-weight: 600;
-        text-align: center;
         color: var(--text-primary);
         margin: 0;
         letter-spacing: -0.5px;
@@ -107,130 +121,120 @@ def apply_custom_styling():
     h1 {
         color: var(--text-primary);
         font-weight: 600;
-        font-size: 2rem;
+        font-size: 1.75rem;
         margin: 1.5rem 0 1rem 0;
-        letter-spacing: -0.5px;
+        letter-spacing: -0.4px;
     }
 
     h2 {
         color: var(--text-primary);
         font-weight: 600;
-        font-size: 1.4rem;
-        margin: 2rem 0 1.5rem 0;
-        letter-spacing: -0.3px;
-        border-bottom: 2px solid var(--accent-blue);
-        padding-bottom: 1rem;
+        font-size: 1.25rem;
+        margin: 2rem 0 1.25rem 0;
+        letter-spacing: -0.2px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0.75rem;
     }
 
     h3 {
         color: var(--text-primary);
         font-weight: 500;
-        font-size: 1.1rem;
-        margin: 1.5rem 0 0.75rem 0;
+        font-size: 1.05rem;
+        margin: 1.25rem 0 0.5rem 0;
     }
 
-    /* Help/Info Box */
+    /* Help/Info Box — minimal */
     .help-box {
-        background-color: var(--dark-bg-tertiary);
-        border-left: 4px solid var(--accent-blue);
-        padding: 1.25rem;
-        border-radius: 8px;
-        margin: 1rem 0;
-        font-size: 0.95rem;
+        background-color: var(--bg-surface);
+        border-left: 3px solid var(--accent-muted);
+        padding: 1rem 1.25rem;
+        border-radius: 0 6px 6px 0;
+        margin: 0 0 1.5rem 0;
+        font-size: 0.9rem;
         color: var(--text-secondary);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        line-height: 1.6;
     }
 
-    /* Stat Card */
+    /* Stat Card — flat, left-aligned */
     .stat-card {
-        background: linear-gradient(135deg, var(--dark-bg-tertiary) 0%, var(--dark-bg-secondary) 100%);
-        padding: 1.5rem;
-        border-radius: 10px;
-        border: 1px solid var(--border-color);
-        text-align: center;
-        margin: 0.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        transition: all 0.3s ease;
-    }
-
-    .stat-card:hover {
-        transform: translateY(-4px);
-        border-color: var(--accent-blue);
-        box-shadow: 0 8px 24px rgba(91, 127, 255, 0.2);
+        background-color: var(--bg-surface);
+        padding: 1.25rem 1.5rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-subtle);
+        text-align: left;
+        margin: 0.25rem 0;
     }
 
     .stat-value {
-        font-size: 2.2rem;
+        font-size: 1.75rem;
         font-weight: 700;
-        color: var(--accent-blue);
-        margin: 0.5rem 0;
+        color: var(--accent);
+        margin: 0.25rem 0;
+        font-variant-numeric: tabular-nums;
     }
 
     .stat-label {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.08em;
+        font-weight: 500;
     }
 
-    /* Empty State */
+    /* Empty State — clean, no dashed border */
     .empty-state {
         text-align: center;
-        padding: 3rem;
-        border: 2px dashed var(--border-color);
-        border-radius: 12px;
+        padding: 4rem 2rem;
+        border-radius: 10px;
         margin: 2rem 0;
-        background-color: var(--dark-bg-tertiary);
-        transition: all 0.3s ease;
-    }
-
-    .empty-state:hover {
-        border-color: var(--accent-blue);
-        background-color: var(--dark-bg-secondary);
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
     }
 
     .empty-state-icon {
-        font-size: 3.5rem;
-        margin-bottom: 1rem;
-        opacity: 0.8;
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+        opacity: 0.6;
     }
 
     .empty-state-title {
-        font-size: 1.3rem;
-        font-weight: 600;
+        font-size: 1.1rem;
+        font-weight: 500;
         color: var(--text-primary);
-        margin: 1rem 0;
+        margin: 0.75rem 0 0.5rem 0;
     }
 
     .empty-state-message {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         color: var(--text-secondary);
+        line-height: 1.5;
     }
 
-    /* Buttons */
+    /* Buttons — flat, no gradient */
     .stButton > button {
-        background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-blue-light) 100%);
+        background-color: var(--accent);
         color: white;
         border: none;
-        border-radius: 8px;
-        padding: 0.75rem 1.5rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(91, 127, 255, 0.3);
-        text-transform: none;
-        letter-spacing: 0.3px;
-        font-size: 0.95rem;
+        border-radius: 6px;
+        padding: 0.6rem 1.25rem;
+        font-weight: 500;
+        font-size: 0.9rem;
+        letter-spacing: 0.01em;
+        transition: background-color 0.2s ease, transform 0.15s ease;
     }
 
     .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(91, 127, 255, 0.4);
-        background: linear-gradient(135deg, var(--accent-blue-light) 0%, #8FA3FF 100%);
+        background-color: var(--accent-muted);
+        transform: translateY(-1px);
     }
 
     .stButton > button:active {
-        transform: translateY(0);
+        transform: scale(0.98);
+    }
+
+    .stButton > button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
     }
 
     /* Input Fields */
@@ -238,179 +242,166 @@ def apply_custom_styling():
     [data-testid="stNumberInput"] > div > div,
     [data-testid="stTextInput"] > div > div,
     [data-testid="stMultiSelect"] > div > div {
-        background-color: var(--dark-bg-tertiary);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
         color: var(--text-primary);
-        transition: all 0.3s ease;
     }
 
     [data-testid="stSelectbox"] > div > div:focus-within,
     [data-testid="stNumberInput"] > div > div:focus-within,
     [data-testid="stTextInput"] > div > div:focus-within,
     [data-testid="stMultiSelect"] > div > div:focus-within {
-        border-color: var(--accent-blue);
-        box-shadow: 0 0 0 3px rgba(91, 127, 255, 0.15);
-        background-color: var(--dark-bg-secondary);
+        border-color: var(--accent-muted);
+        box-shadow: 0 0 0 2px rgba(107, 138, 237, 0.15);
+        background-color: var(--bg-elevated);
     }
 
     /* Checkbox and Radio */
-    [data-testid="stCheckbox"] label {
-        color: var(--text-primary);
-    }
-
-    [data-testid="stCheckbox"] {
-        padding: 0.75rem;
-        border-radius: 8px;
-        transition: all 0.2s ease;
-    }
-
-    [data-testid="stCheckbox"]:hover {
-        background-color: var(--dark-bg-tertiary);
-    }
-
+    [data-testid="stCheckbox"] label,
     [data-testid="stRadio"] label {
         color: var(--text-primary);
     }
 
+    [data-testid="stCheckbox"] {
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+    }
+
+    [data-testid="stCheckbox"]:hover {
+        background-color: var(--bg-surface);
+    }
+
     /* Messages */
     .stSuccess {
-        background-color: rgba(52, 211, 153, 0.1) !important;
-        border-left: 4px solid var(--success-color) !important;
-        color: #A7F3D0 !important;
-        border-radius: 8px !important;
-        padding: 1rem !important;
+        background-color: rgba(74, 222, 128, 0.08) !important;
+        border-left: 3px solid var(--success) !important;
+        color: #bbf7d0 !important;
+        border-radius: 0 6px 6px 0 !important;
+        padding: 0.85rem 1rem !important;
     }
 
     .stError {
-        background-color: rgba(248, 113, 113, 0.1) !important;
-        border-left: 4px solid var(--error-color) !important;
-        color: #FECACA !important;
-        border-radius: 8px !important;
-        padding: 1rem !important;
+        background-color: rgba(248, 113, 113, 0.08) !important;
+        border-left: 3px solid var(--error) !important;
+        color: #fecaca !important;
+        border-radius: 0 6px 6px 0 !important;
+        padding: 0.85rem 1rem !important;
     }
 
     .stWarning {
-        background-color: rgba(251, 191, 36, 0.1) !important;
-        border-left: 4px solid var(--warning-color) !important;
-        color: #FCD34D !important;
-        border-radius: 8px !important;
-        padding: 1rem !important;
+        background-color: rgba(250, 204, 21, 0.08) !important;
+        border-left: 3px solid var(--warning) !important;
+        color: #fef08a !important;
+        border-radius: 0 6px 6px 0 !important;
+        padding: 0.85rem 1rem !important;
     }
 
     .stInfo {
-        background-color: rgba(91, 127, 255, 0.1) !important;
-        border-left: 4px solid var(--accent-blue) !important;
-        color: #BFDBFE !important;
-        border-radius: 8px !important;
-        padding: 1rem !important;
+        background-color: rgba(107, 138, 237, 0.08) !important;
+        border-left: 3px solid var(--accent-muted) !important;
+        color: #c7d2fe !important;
+        border-radius: 0 6px 6px 0 !important;
+        padding: 0.85rem 1rem !important;
     }
 
     /* Dataframe */
     [data-testid="stDataFrame"] {
-        border-radius: 10px;
+        border-radius: 8px;
         overflow: hidden;
-        border: 1px solid var(--border-color);
+        border: 1px solid var(--border-subtle);
     }
 
     /* Expander */
     [data-testid="stExpander"] > div > button {
-        background-color: var(--dark-bg-tertiary) !important;
-        border: 1px solid var(--border-color) !important;
-        border-radius: 8px !important;
+        background-color: var(--bg-surface) !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: 6px !important;
         color: var(--text-primary) !important;
-        font-weight: 600 !important;
-        padding: 1rem !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        font-weight: 500 !important;
+        padding: 0.85rem 1rem !important;
     }
 
     [data-testid="stExpander"] > div > button:hover {
-        background-color: var(--dark-bg-secondary) !important;
-        border-color: var(--accent-blue) !important;
-        box-shadow: 0 4px 12px rgba(91, 127, 255, 0.2) !important;
-        transform: translateX(2px);
+        background-color: var(--bg-elevated) !important;
+        border-color: var(--border) !important;
     }
 
     [data-testid="stExpander"] > div > button:focus {
         outline: none;
-        border-color: var(--accent-blue) !important;
-    }
-
-    /* Expander content */
-    [data-testid="stExpander"] > div > div {
-        animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        border-color: var(--accent-muted) !important;
     }
 
     /* Divider */
     hr {
         border: none;
-        border-top: 1px solid var(--border-color);
+        border-top: 1px solid var(--border);
         margin: 1.5rem 0;
     }
 
     /* Links */
     a {
-        color: var(--accent-blue);
+        color: var(--accent);
         text-decoration: none;
-        transition: all 0.2s ease;
     }
 
     a:hover {
-        color: var(--accent-blue-light);
+        color: var(--accent-muted);
         text-decoration: underline;
     }
 
     /* Progress bar */
     [data-testid="stProgress"] > div {
-        background-color: var(--border-color);
+        background-color: var(--bg-elevated);
     }
 
     [data-testid="stProgress"] > div > div {
-        background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-blue-light) 100%);
+        background-color: var(--accent);
     }
 
     /* Metric */
     [data-testid="stMetric"] {
-        background-color: var(--dark-bg-tertiary);
-        padding: 1.5rem;
-        border-radius: 10px;
-        border: 1px solid var(--border-color);
+        background-color: var(--bg-surface);
+        padding: 1.25rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-subtle);
     }
 
-    /* Responsive Design */
+    /* Tabs */
+    [data-testid="stTabs"] [data-baseweb="tab-list"] {
+        gap: 0;
+        background-color: var(--bg-surface);
+        border-radius: 8px;
+        padding: 4px;
+        border: 1px solid var(--border-subtle);
+    }
+
+    [data-testid="stTabs"] [data-baseweb="tab"] {
+        border-radius: 6px;
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    [data-testid="stTabs"] [aria-selected="true"] {
+        background-color: var(--bg-elevated);
+        color: var(--text-primary);
+    }
+
+    /* Responsive */
     @media (max-width: 800px) {
         .stButton > button {
             padding: 0.5rem 1rem;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
-        
         .app-title {
-            font-size: 1.8rem;
-        }
-        
-        h1 {
             font-size: 1.5rem;
         }
-
-        [data-testid="stAppViewContainer"] > section {
-            padding: 1rem 1.5rem;
+        h1 {
+            font-size: 1.35rem;
         }
-    }
-
-    /* Smooth animations */
-    * {
-        transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        .block-container {
+            padding: 1rem;
+        }
     }
     </style>
     """
@@ -488,11 +479,10 @@ def data_quality_report(df):
         })
         st.dataframe(missing_table[missing_table["Missing Count"] > 0], use_container_width=True)
 
-def empty_state(icon, title, message):
+def empty_state(title, message):
     """Display user-friendly empty state UI."""
     st.markdown(f"""
     <div class="empty-state">
-        <div class="empty-state-icon">{icon}</div>
         <div class="empty-state-title">{title}</div>
         <div class="empty-state-message">{message}</div>
     </div>
@@ -533,22 +523,22 @@ def plot_roc_curve(y_test, y_pred_proba, model_name="Model"):
     roc_auc = auc(fpr, tpr)
     
     fig, ax = plt.subplots(figsize=(8, 6))
-    fig.patch.set_facecolor('#1A1F2E')
-    ax.set_facecolor('#252D3D')
+    fig.patch.set_facecolor('#181b22')
+    ax.set_facecolor('#1e2129')
     
-    ax.plot(fpr, tpr, color='#5B7FFF', lw=2.5, label=f'ROC Curve (AUC = {roc_auc:.3f})')
-    ax.plot([0, 1], [0, 1], color='#FF6B6B', lw=2, linestyle='--', label='Random Classifier')
+    ax.plot(fpr, tpr, color='#6b8aed', lw=2.5, label=f'ROC curve (AUC = {roc_auc:.3f})')
+    ax.plot([0, 1], [0, 1], color='#f87171', lw=2, linestyle='--', label='Random classifier')
     
-    ax.set_xlabel('False Positive Rate', color='#E8EAED', fontweight='600')
-    ax.set_ylabel('True Positive Rate', color='#E8EAED', fontweight='600')
-    ax.set_title(f'ROC Curve - {model_name}', color='#E8EAED', fontweight='600', pad=15)
-    ax.tick_params(colors='#E8EAED')
-    ax.legend(loc='lower right', facecolor='#252D3D', edgecolor='#2D3748', labelcolor='#E8EAED')
+    ax.set_xlabel('False positive rate', color='#dfe2e8', fontweight='500')
+    ax.set_ylabel('True positive rate', color='#dfe2e8', fontweight='500')
+    ax.set_title(f'ROC curve — {model_name}', color='#dfe2e8', fontweight='500', pad=15)
+    ax.tick_params(colors='#dfe2e8')
+    ax.legend(loc='lower right', facecolor='#1e2129', edgecolor='#282c34', labelcolor='#dfe2e8')
     
     for spine in ax.spines.values():
-        spine.set_color('#2D3748')
+        spine.set_color('#282c34')
     
-    ax.grid(True, alpha=0.1, color='#2D3748')
+    ax.grid(True, alpha=0.1, color='#282c34')
     plt.tight_layout()
     return fig, roc_auc
 
@@ -557,22 +547,22 @@ def get_missing_value_heatmap(df):
     missing_matrix = df.isna().astype(int)
     
     fig, ax = plt.subplots(figsize=(12, 6))
-    fig.patch.set_facecolor('#1A1F2E')
-    ax.set_facecolor('#252D3D')
+    fig.patch.set_facecolor('#181b22')
+    ax.set_facecolor('#1e2129')
     
     heatmap = sns.heatmap(missing_matrix.T, cmap='RdYlGn_r', cbar=True, ax=ax, 
                          cbar_kws={'label': 'Missing (1) vs Present (0)'},
-                         linewidths=0.2, linecolor='#1A1F2E')
+                         linewidths=0.2, linecolor='#181b22')
     
-    ax.set_xlabel('Row Index', color='#E8EAED', fontweight='600')
-    ax.set_ylabel('Columns', color='#E8EAED', fontweight='600')
-    ax.set_title('Missing Data Pattern Heatmap', color='#E8EAED', fontweight='600', pad=15)
-    ax.tick_params(colors='#E8EAED')
+    ax.set_xlabel('Row index', color='#dfe2e8', fontweight='500')
+    ax.set_ylabel('Columns', color='#dfe2e8', fontweight='500')
+    ax.set_title('Missing data pattern', color='#dfe2e8', fontweight='500', pad=15)
+    ax.tick_params(colors='#dfe2e8')
     
     cbar = heatmap.collections[0].colorbar
     if cbar:
-        cbar.set_label('Missing (1) vs Present (0)', color='#E8EAED')
-        cbar.ax.tick_params(colors='#E8EAED')
+        cbar.set_label('Missing (1) vs Present (0)', color='#dfe2e8')
+        cbar.ax.tick_params(colors='#dfe2e8')
     
     plt.tight_layout()
     return fig
@@ -593,134 +583,140 @@ def generate_html_report(df, profile, stat_summary, trained_models=None, mode=No
                 box-sizing: border-box;
             }}
             body {{
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                background: linear-gradient(135deg, #0F1419 0%, #1A1F2E 100%);
-                color: #E8EAED;
+                font-family: 'Outfit', 'Segoe UI', sans-serif;
+                background: #111318;
+                color: #dfe2e8;
                 line-height: 1.6;
                 padding: 20px;
             }}
             .container {{
                 max-width: 1200px;
                 margin: 0 auto;
-                background: #1A1F2E;
-                border-radius: 12px;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                background: #181b22;
+                border-radius: 10px;
                 overflow: hidden;
+                border: 1px solid #282c34;
             }}
             header {{
-                background: linear-gradient(135deg, #5B7FFF 0%, #7B9FFF 100%);
+                background: #1e2129;
                 padding: 40px 20px;
                 text-align: center;
+                border-bottom: 1px solid #282c34;
             }}
             header h1 {{
-                font-size: 2.5em;
-                margin-bottom: 10px;
-                color: white;
+                font-size: 2.2em;
+                margin-bottom: 8px;
+                color: #dfe2e8;
+                font-weight: 600;
             }}
             header p {{
-                color: rgba(255, 255, 255, 0.9);
-                font-size: 1.1em;
+                color: #8b9099;
+                font-size: 1em;
             }}
             .content {{
                 padding: 40px;
             }}
             section {{
                 margin-bottom: 40px;
-                border-bottom: 2px solid #2D3748;
+                border-bottom: 1px solid #282c34;
                 padding-bottom: 30px;
             }}
             section:last-child {{
                 border-bottom: none;
             }}
             h2 {{
-                color: #5B7FFF;
+                color: #6b8aed;
                 margin-bottom: 20px;
-                font-size: 1.8em;
-                border-left: 4px solid #5B7FFF;
+                font-size: 1.6em;
+                border-left: 3px solid #6b8aed;
                 padding-left: 15px;
+                font-weight: 500;
             }}
             table {{
                 width: 100%;
                 border-collapse: collapse;
                 margin: 20px 0;
-                background: #252D3D;
+                background: #1e2129;
                 border-radius: 8px;
                 overflow: hidden;
             }}
             th {{
-                background: #5B7FFF;
-                color: white;
+                background: #252830;
+                color: #dfe2e8;
                 padding: 12px;
                 text-align: left;
-                font-weight: 600;
+                font-weight: 500;
+                border-bottom: 1px solid #282c34;
             }}
             td {{
                 padding: 10px 12px;
-                border-bottom: 1px solid #2D3748;
+                border-bottom: 1px solid #282c34;
             }}
             tr:hover {{
-                background: #2D3748;
+                background: #252830;
             }}
             .metrics {{
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 20px;
+                gap: 16px;
                 margin: 20px 0;
             }}
             .metric-card {{
-                background: #252D3D;
+                background: #1e2129;
                 padding: 20px;
                 border-radius: 8px;
-                border-left: 4px solid #5B7FFF;
+                border: 1px solid #282c34;
             }}
             .metric-label {{
-                color: #9CA3AF;
-                font-size: 0.9em;
+                color: #5c6068;
+                font-size: 0.85em;
                 margin-bottom: 5px;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
             }}
             .metric-value {{
-                color: #5B7FFF;
+                color: #6b8aed;
                 font-size: 1.8em;
                 font-weight: 700;
             }}
             footer {{
-                background: #0F1419;
+                background: #111318;
                 padding: 20px;
                 text-align: center;
-                color: #9CA3AF;
-                font-size: 0.9em;
+                color: #5c6068;
+                font-size: 0.85em;
+                border-top: 1px solid #282c34;
             }}
             .info-box {{
-                background: #252D3D;
-                border-left: 4px solid #5B7FFF;
+                background: #1e2129;
+                border-left: 3px solid #6b8aed;
                 padding: 15px;
                 margin: 15px 0;
-                border-radius: 4px;
+                border-radius: 0 6px 6px 0;
             }}
         </style>
     </head>
     <body>
         <div class="container">
             <header>
-                <h1>✨ Data Science Analysis Report</h1>
+                <h1>Data Science Analysis Report</h1>
                 <p>Comprehensive analysis and insights from your dataset</p>
             </header>
             
             <div class="content">
-                <!-- Dataset Overview -->
                 <section>
-                    <h2>📊 Dataset Overview</h2>
+                    <h2>Dataset overview</h2>
                     <div class="metrics">
                         <div class="metric-card">
-                            <div class="metric-label">Total Rows</div>
+                            <div class="metric-label">Total rows</div>
                             <div class="metric-value">{profile['Total Rows']:,}</div>
                         </div>
                         <div class="metric-card">
-                            <div class="metric-label">Total Columns</div>
+                            <div class="metric-label">Total columns</div>
                             <div class="metric-value">{profile['Total Columns']}</div>
                         </div>
                         <div class="metric-card">
-                            <div class="metric-label">Memory Usage</div>
+                            <div class="metric-label">Memory usage</div>
                             <div class="metric-value">{profile['Memory Usage (MB)']:.2f} MB</div>
                         </div>
                         <div class="metric-card">
@@ -728,28 +724,26 @@ def generate_html_report(df, profile, stat_summary, trained_models=None, mode=No
                             <div class="metric-value">{profile['Completeness %']:.1f}%</div>
                         </div>
                         <div class="metric-card">
-                            <div class="metric-label">Duplicate Rows</div>
+                            <div class="metric-label">Duplicate rows</div>
                             <div class="metric-value">{profile['Duplicate Rows']}</div>
                         </div>
                         <div class="metric-card">
-                            <div class="metric-label">Complete Rows</div>
+                            <div class="metric-label">Complete rows</div>
                             <div class="metric-value">{profile['Complete Rows']:,}</div>
                         </div>
                     </div>
                 </section>
                 
-                <!-- Statistical Summary -->
                 {f'''
                 <section>
-                    <h2>📈 Statistical Summary</h2>
+                    <h2>Statistical summary</h2>
                     {stat_summary.to_html() if stat_summary is not None else '<p>No numeric columns found.</p>'}
                 </section>
                 ''' if stat_summary is not None else ''}
                 
-                <!-- Model Results -->
                 {f'''
                 <section>
-                    <h2>🤖 Model Training Results</h2>
+                    <h2>Model training results</h2>
                     <div class="info-box">
                         <strong>Mode:</strong> {mode}
                     </div>
@@ -759,7 +753,7 @@ def generate_html_report(df, profile, stat_summary, trained_models=None, mode=No
             </div>
             
             <footer>
-                <p>Generated by AI Data Science Assistant • Report created on {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+                <p>Generated by AI Data Science Assistant &middot; Report created on {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
             </footer>
         </div>
     </body>
@@ -775,40 +769,36 @@ def plot_pair_plot(df, numeric_cols=None, sample_size=500):
     if len(numeric_cols) < 2:
         return None
     
-    # Sample data if too large for performance
     if len(df) > sample_size:
         df_sample = df[numeric_cols].sample(n=sample_size, random_state=42)
     else:
         df_sample = df[numeric_cols]
     
     fig = plt.figure(figsize=(max(10, len(numeric_cols) * 2), max(10, len(numeric_cols) * 2)))
-    fig.patch.set_facecolor('#1A1F2E')
+    fig.patch.set_facecolor('#181b22')
     
-    # Create pair plot manually with dark theme
     n_cols = len(numeric_cols)
     for i, col_x in enumerate(numeric_cols):
         for j, col_y in enumerate(numeric_cols):
             ax = plt.subplot(n_cols, n_cols, i * n_cols + j + 1)
-            ax.set_facecolor('#252D3D')
+            ax.set_facecolor('#1e2129')
             
             if i == j:
-                # Diagonal: histogram
-                ax.hist(df_sample[col_x], bins=20, color='#5B7FFF', alpha=0.7, edgecolor='#2D3748')
+                ax.hist(df_sample[col_x], bins=20, color='#6b8aed', alpha=0.7, edgecolor='#282c34')
             else:
-                # Off-diagonal: scatter plot
-                ax.scatter(df_sample[col_x], df_sample[col_y], alpha=0.5, color='#5B7FFF', s=20, edgecolors='#2D3748')
+                ax.scatter(df_sample[col_x], df_sample[col_y], alpha=0.5, color='#6b8aed', s=20, edgecolors='#282c34')
             
-            ax.tick_params(colors='#E8EAED', labelsize=8)
+            ax.tick_params(colors='#dfe2e8', labelsize=8)
             for spine in ax.spines.values():
-                spine.set_color('#2D3748')
+                spine.set_color('#282c34')
             
             if i == n_cols - 1:
-                ax.set_xlabel(col_x, color='#E8EAED', fontsize=9, fontweight='600')
+                ax.set_xlabel(col_x, color='#dfe2e8', fontsize=9, fontweight='500')
             else:
                 ax.set_xticklabels([])
             
             if j == 0:
-                ax.set_ylabel(col_y, color='#E8EAED', fontsize=9, fontweight='600')
+                ax.set_ylabel(col_y, color='#dfe2e8', fontsize=9, fontweight='500')
             else:
                 ax.set_yticklabels([])
     
@@ -832,28 +822,26 @@ def plot_box_plots(df, numeric_cols=None):
     else:
         axes = axes.flatten()
     
-    fig.patch.set_facecolor('#1A1F2E')
+    fig.patch.set_facecolor('#181b22')
     
     for idx, col in enumerate(numeric_cols):
         ax = axes[idx]
-        ax.set_facecolor('#252D3D')
+        ax.set_facecolor('#1e2129')
         
-        # Create box plot
         bp = ax.boxplot(df[col].dropna(), vert=True, patch_artist=True,
-                        boxprops=dict(facecolor='#5B7FFF', alpha=0.7),
-                        whiskerprops=dict(color='#E8EAED'),
-                        capprops=dict(color='#E8EAED'),
-                        medianprops=dict(color='#FF6B6B', linewidth=2),
-                        flierprops=dict(marker='o', markerfacecolor='#FF6B6B', markersize=6, alpha=0.5))
+                        boxprops=dict(facecolor='#6b8aed', alpha=0.7),
+                        whiskerprops=dict(color='#dfe2e8'),
+                        capprops=dict(color='#dfe2e8'),
+                        medianprops=dict(color='#f87171', linewidth=2),
+                        flierprops=dict(marker='o', markerfacecolor='#f87171', markersize=6, alpha=0.5))
         
-        ax.set_title(col, color='#E8EAED', fontweight='600', fontsize=11)
-        ax.set_ylabel('Value', color='#E8EAED', fontweight='600')
-        ax.tick_params(colors='#E8EAED')
+        ax.set_title(col, color='#dfe2e8', fontweight='500', fontsize=11)
+        ax.set_ylabel('Value', color='#dfe2e8', fontweight='500')
+        ax.tick_params(colors='#dfe2e8')
         for spine in ax.spines.values():
-            spine.set_color('#2D3748')
-        ax.grid(True, alpha=0.1, color='#2D3748', axis='y')
+            spine.set_color('#282c34')
+        ax.grid(True, alpha=0.1, color='#282c34', axis='y')
     
-    # Hide extra subplots
     for idx in range(len(numeric_cols), len(axes)):
         axes[idx].set_visible(False)
     
@@ -877,36 +865,32 @@ def plot_categorical_distributions(df, categorical_cols=None, max_categories=20)
     else:
         axes = axes.flatten()
     
-    fig.patch.set_facecolor('#1A1F2E')
+    fig.patch.set_facecolor('#181b22')
     
     for idx, col in enumerate(categorical_cols):
         ax = axes[idx]
-        ax.set_facecolor('#252D3D')
+        ax.set_facecolor('#1e2129')
         
-        # Count values
         value_counts = df[col].value_counts().head(max_categories)
         
-        # Create bar chart
-        bars = ax.bar(range(len(value_counts)), value_counts.values, color='#5B7FFF', 
-                      edgecolor='#2D3748', alpha=0.8)
+        bars = ax.bar(range(len(value_counts)), value_counts.values, color='#6b8aed', 
+                      edgecolor='#282c34', alpha=0.8)
         
         ax.set_xticks(range(len(value_counts)))
         ax.set_xticklabels([str(v)[:15] for v in value_counts.index], rotation=45, ha='right', 
-                           color='#E8EAED', fontsize=9)
-        ax.set_ylabel('Count', color='#E8EAED', fontweight='600')
-        ax.set_title(f'{col} Distribution', color='#E8EAED', fontweight='600', fontsize=11)
-        ax.tick_params(colors='#E8EAED')
+                           color='#dfe2e8', fontsize=9)
+        ax.set_ylabel('Count', color='#dfe2e8', fontweight='500')
+        ax.set_title(f'{col} distribution', color='#dfe2e8', fontweight='500', fontsize=11)
+        ax.tick_params(colors='#dfe2e8')
         for spine in ax.spines.values():
-            spine.set_color('#2D3748')
-        ax.grid(True, alpha=0.1, color='#2D3748', axis='y')
+            spine.set_color('#282c34')
+        ax.grid(True, alpha=0.1, color='#282c34', axis='y')
         
-        # Add count labels on bars
         for bar in bars:
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2., height,
-                   f'{int(height)}', ha='center', va='bottom', color='#E8EAED', fontsize=8)
+                   f'{int(height)}', ha='center', va='bottom', color='#dfe2e8', fontsize=8)
     
-    # Hide extra subplots
     for idx in range(len(categorical_cols), len(axes)):
         axes[idx].set_visible(False)
     
@@ -1005,24 +989,22 @@ def plot_correlation_with_significance(df, numeric_cols):
     corr_df, pval_df = core.calculate_correlation_significance(df, numeric_cols)
     
     fig, ax = plt.subplots(figsize=(12, 10))
-    fig.set_facecolor('#0F1419')
-    ax.set_facecolor('#1A1F2E')
+    fig.set_facecolor('#111318')
+    ax.set_facecolor('#181b22')
     
-    # Create heatmap
     sns.heatmap(corr_df, annot=True, fmt='.2f', cmap='RdBu_r', center=0,
                 square=True, linewidths=0.5, cbar_kws={"shrink": 0.8},
                 ax=ax, cbar=True, vmin=-1, vmax=1)
     
-    ax.set_title('Correlation Matrix with Pearson r', color='#E8EAED', fontweight='600', fontsize=12, pad=15)
-    plt.setp(ax.get_xticklabels(), rotation=45, ha='right', color='#E8EAED')
-    plt.setp(ax.get_yticklabels(), rotation=0, color='#E8EAED')
+    ax.set_title('Correlation matrix with Pearson r', color='#dfe2e8', fontweight='500', fontsize=12, pad=15)
+    plt.setp(ax.get_xticklabels(), rotation=45, ha='right', color='#dfe2e8')
+    plt.setp(ax.get_yticklabels(), rotation=0, color='#dfe2e8')
     
-    # Add significance stars for p-values < 0.05
     for i in range(len(numeric_cols)):
         for j in range(len(numeric_cols)):
             if i != j and pval_df.iloc[i, j] < 0.05:
                 ax.text(j+0.5, i+0.7, '*', ha='center', va='center', 
-                       color='#FFD700', fontsize=16, fontweight='bold')
+                       color='#facc15', fontsize=16, fontweight='bold')
     
     plt.tight_layout()
     return fig, corr_df, pval_df
@@ -1053,7 +1035,7 @@ def perform_hypothesis_test(df, col1, col2, test_type='pearson'):
                     'Test': test_label,
                     'Correlation': corr,
                     'P-value': pval,
-                    'Significant': 'Yes ✓' if pval < 0.05 else 'No ✗',
+                    'Significant': 'Yes' if pval < 0.05 else 'No',
                     'Sample Size': len(paired)
                 }
             except Exception:
@@ -1082,7 +1064,7 @@ def perform_hypothesis_test(df, col1, col2, test_type='pearson'):
                 'Test': 'Independent T-Test',
                 'T-Statistic': stat,
                 'P-value': pval,
-                'Significant': 'Yes ✓' if pval < 0.05 else 'No ✗',
+                'Significant': 'Yes' if pval < 0.05 else 'No',
                 'Sample Size 1': len(valid_data_1),
                 'Sample Size 2': len(valid_data_2)
             }
@@ -1103,73 +1085,62 @@ def landing_page():
     """Landing page with welcome message."""
     st.markdown("""
     <div class="app-header">
-        <h1 class="app-title">✨ AI Data Science Assistant</h1>
+        <h1 class="app-title">AI Data Science Assistant</h1>
     </div>
     """, unsafe_allow_html=True)
     
     st.markdown("""
-    <div style="text-align: center; margin: 0.5rem 0 1.5rem 0;">
-        <p style="color: #9CA3AF; font-size: 1.1rem; margin: 0;">
-            Transform your data into actionable insights with powerful ML workflows
+    <div style="text-align: center; margin: 0 0 2.5rem 0;">
+        <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0; font-weight: 400;">
+            Data cleaning, visualization, and model training in one place.
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Main Features Section
-    st.markdown("<h2 style='margin-top: 3rem; margin-bottom: 1.5rem; padding-bottom: 1rem;'>✨ Key Features</h2>", unsafe_allow_html=True)
+    # Features Section
+    st.markdown("<h2>What it does</h2>", unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
     features_left = [
         {
-            "icon": "📥",
-            "title": "Upload & Explore",
-            "desc": "Load CSV files or use built-in datasets with instant analysis"
+            "title": "Upload & Profile",
+            "desc": "Load CSV files or built-in datasets. Instant profiling of columns, types, and missing values."
         },
         {
-            "icon": "🧹",
-            "title": "Smart Cleaning",
-            "desc": "Remove duplicates, handle missing values, scale features with live preview"
+            "title": "Clean & Prepare",
+            "desc": "Deduplication, imputation, encoding, scaling. Live preview before you commit."
         },
         {
-            "icon": "📊",
             "title": "Visualize",
-            "desc": "Create correlation matrices, distributions, and custom charts"
+            "desc": "Correlation matrices with significance testing, distributions, and custom charts."
         }
     ]
     
     features_right = [
         {
-            "icon": "🤖",
-            "title": "ML Models",
-            "desc": "Train and compare classification/regression models side-by-side"
+            "title": "Train Models",
+            "desc": "Auto-detect classification vs regression. Compare Logistic Regression, Random Forest, Decision Tree."
         },
         {
-            "icon": "🎯",
-            "title": "Feature Analysis",
-            "desc": "Understand feature importance and data profiling insights"
+            "title": "Feature Engineering",
+            "desc": "Polynomial features, interaction terms, and binning to improve model performance."
         },
         {
-            "icon": "💾",
-            "title": "Export Results",
-            "desc": "Download cleaned data and trained models for production use"
+            "title": "Export",
+            "desc": "Download cleaned data, trained models, and HTML analysis reports."
         }
     ]
     
     with col1:
         for feature in features_left:
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #252D3D 0%, #1F2833 100%);
-                        padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem;
-                        border: 1px solid #2D3748; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-                        transition: all 0.3s ease; cursor: pointer;"
-                 onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(91, 127, 255, 0.2)';"
-                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.3)';">
-                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{feature['icon']}</div>
-                <h3 style="color: #E8EAED; font-weight: 600; margin: 0.5rem 0; font-size: 1.1rem;">
+            <div style="background: var(--bg-surface); padding: 1.25rem 1.5rem; border-radius: 8px;
+                        margin-bottom: 0.75rem; border: 1px solid var(--border-subtle);">
+                <h3 style="color: var(--text-primary); font-weight: 500; margin: 0 0 0.35rem 0; font-size: 1rem;">
                     {feature['title']}
                 </h3>
-                <p style="color: #9CA3AF; margin: 0; font-size: 0.9rem; line-height: 1.5;">
+                <p style="color: var(--text-secondary); margin: 0; font-size: 0.88rem; line-height: 1.55;">
                     {feature['desc']}
                 </p>
             </div>
@@ -1178,60 +1149,48 @@ def landing_page():
     with col2:
         for feature in features_right:
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #252D3D 0%, #1F2833 100%);
-                        padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem;
-                        border: 1px solid #2D3748; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-                        transition: all 0.3s ease; cursor: pointer;"
-                 onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 24px rgba(91, 127, 255, 0.2)';"
-                 onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.3)';">
-                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{feature['icon']}</div>
-                <h3 style="color: #E8EAED; font-weight: 600; margin: 0.5rem 0; font-size: 1.1rem;">
+            <div style="background: var(--bg-surface); padding: 1.25rem 1.5rem; border-radius: 8px;
+                        margin-bottom: 0.75rem; border: 1px solid var(--border-subtle);">
+                <h3 style="color: var(--text-primary); font-weight: 500; margin: 0 0 0.35rem 0; font-size: 1rem;">
                     {feature['title']}
                 </h3>
-                <p style="color: #9CA3AF; margin: 0; font-size: 0.9rem; line-height: 1.5;">
+                <p style="color: var(--text-secondary); margin: 0; font-size: 0.88rem; line-height: 1.55;">
                     {feature['desc']}
                 </p>
             </div>
             """, unsafe_allow_html=True)
     
-    # Quick Start Section
-    st.markdown("<h2 style='margin-top: 3rem; margin-bottom: 1.5rem; padding-bottom: 1rem;'>🚀 Quick Start Guide</h2>", unsafe_allow_html=True)
+    # Quick Start
+    st.markdown("<h2>Quick start</h2>", unsafe_allow_html=True)
     
-    st.write("""
-    **1. Upload Data** — Click the 📤 Upload Data menu to load your CSV or select a sample dataset
+    st.markdown("""
+    <div style="background: var(--bg-surface); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); line-height: 1.8; font-size: 0.92rem; color: var(--text-secondary);">
+        <strong style="color: var(--text-primary);">1.</strong> Go to <strong style="color: var(--text-primary);">Upload Data</strong> to load a CSV or sample dataset<br>
+        <strong style="color: var(--text-primary);">2.</strong> Review the data profile, stats, and missing value patterns<br>
+        <strong style="color: var(--text-primary);">3.</strong> Use <strong style="color: var(--text-primary);">Clean Data</strong> to deduplicate, impute, encode, or scale<br>
+        <strong style="color: var(--text-primary);">4.</strong> Explore distributions and correlations in <strong style="color: var(--text-primary);">Visualize</strong><br>
+        <strong style="color: var(--text-primary);">5.</strong> Train and compare models in <strong style="color: var(--text-primary);">Model Training</strong><br>
+        <strong style="color: var(--text-primary);">6.</strong> Export your results as CSV, pickle, or HTML report
+    </div>
+    """, unsafe_allow_html=True)
     
-    **2. Explore & Profile** — View automatic data quality metrics, statistics, and column profiling
-    
-    **3. Clean & Prepare** — Apply cleaning operations with live preview before committing changes
-    
-    **4. Analyze & Visualize** — Create distributions, correlations, and custom charts to understand patterns
-    
-    **5. Build Models** — Train ML models and see feature importance, diagnostics, and performance metrics
-    
-    **6. Export & Deploy** — Download cleaned data and trained models for production use
-    """)
-    
-    # Stats/Highlights Section
-    
-    # Tips Section
-    st.markdown("<h2 style='margin-top: 3rem; margin-bottom: 1.5rem; padding-bottom: 1rem;'>💡 Pro Tips</h2>", unsafe_allow_html=True)
+    # Tips
+    st.markdown("<h2>Tips</h2>", unsafe_allow_html=True)
     
     tips = [
-        "🎯 Start with Sample Data — Load Iris or Diabetes datasets to explore without your own data",
-        "📊 Use Live Preview — All cleaning operations show before/after comparison before committing",
-        "🔗 Data Persists — Navigate between pages - your data and models are always preserved",
-        "🤖 Compare Models — Train multiple models together to find the best performer for your task",
-        "📥 Export Everything — Download cleaned data, trained models, and analysis reports",
-        "⚡ Feature Engineering — Use polynomial features, interactions, and binning to improve model performance",
-        "📈 Statistical Testing — Check p-values and significance of relationships in correlation matrices",
-        "🎯 Classification Tips — Select target variable with 2-5 unique classes for best results",
-        "📉 Regression Tips — Choose numeric target variable and explore feature relationships first"
+        "Start with a sample dataset (Iris or Diabetes) to explore without uploading your own data.",
+        "All cleaning operations show a live preview before you apply them.",
+        "Data persists across pages — navigate freely without losing your work.",
+        "Train multiple models at once to compare performance side by side.",
+        "Use feature engineering (polynomial, interactions, binning) before training to boost accuracy.",
+        "Correlation matrices include p-values — look for gold stars on significant pairs.",
     ]
     
     for tip in tips:
         st.markdown(f"""
-        <div style="background: #252D3D; padding: 1.25rem; border-radius: 8px; border-left: 4px solid #5B7FFF; margin-bottom: 1rem;">
-            <p style="color: #E8EAED; margin: 0; font-size: 0.95rem; line-height: 1.6;">{tip}</p>
+        <div style="background: var(--bg-surface); padding: 0.85rem 1.25rem; border-radius: 6px;
+                    border-left: 3px solid var(--accent-muted); margin-bottom: 0.5rem;">
+            <p style="color: var(--text-secondary); margin: 0; font-size: 0.88rem; line-height: 1.5;">{tip}</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1239,7 +1198,7 @@ def upload_and_schema():
     """Upload data and schema inspection page."""
     st.markdown("""
     <div class="app-header">
-        <h1 class="app-title">📤 Upload Data</h1>
+        <h1 class="app-title">Upload Data</h1>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1250,29 +1209,29 @@ def upload_and_schema():
     """, unsafe_allow_html=True)
     
     # Sample Datasets Section
-    st.subheader("📚 Sample Datasets")
+    st.subheader("Sample datasets")
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("🌸 Load Iris Dataset", use_container_width=True, key="iris_btn"):
+        if st.button("Load Iris dataset", use_container_width=True, key="iris_btn"):
             df = load_sample_dataset("iris")
             st.session_state.original_df = df.copy()
             st.session_state.df = df.copy()
             st.session_state.pending_clean_options = {}
-            st.success("✅ Iris dataset loaded successfully!")
+            st.success("Iris dataset loaded.")
             st.rerun()
     
     with col2:
-        if st.button("🏥 Load Diabetes Dataset", use_container_width=True, key="diabetes_btn"):
+        if st.button("Load Diabetes dataset", use_container_width=True, key="diabetes_btn"):
             df = load_sample_dataset("diabetes")
             st.session_state.original_df = df.copy()
             st.session_state.df = df.copy()
             st.session_state.pending_clean_options = {}
-            st.success("✅ Diabetes dataset loaded successfully!")
+            st.success("Diabetes dataset loaded.")
             st.rerun()
     
     # CSV File Upload
-    st.subheader("📁 Upload CSV File")
+    st.subheader("Upload CSV")
     uploaded_file = st.file_uploader("Choose a CSV file", type="csv", key="csv_upload")
     
     if uploaded_file is not None:
@@ -1281,38 +1240,38 @@ def upload_and_schema():
             st.session_state.original_df = df.copy()
             st.session_state.df = df.copy()
             st.session_state.pending_clean_options = {}
-            st.success("✅ CSV file uploaded successfully!")
+            st.success("CSV file uploaded.")
             st.rerun()
         except Exception as e:
-            st.error(f"❌ Error reading file: {str(e)}")
+            st.error(f"Error reading file: {str(e)}")
     
     # Show data if loaded
     if st.session_state.df is not None:
-        st.subheader("📈 Data Quality Report")
+        st.subheader("Data quality report")
         data_quality_report(st.session_state.df)
         
         # Data Profiling Dashboard
-        st.subheader("📊 Data Profiling Report")
+        st.subheader("Data profiling")
         profile, col_profile = generate_data_profile(st.session_state.df)
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("💾 Memory Usage", f"{profile['Memory Usage (MB)']:.2f} MB")
+            st.metric("Memory usage", f"{profile['Memory Usage (MB)']:.2f} MB")
         with col2:
-            st.metric("✅ Completeness", f"{profile['Completeness %']:.1f}%")
+            st.metric("Completeness", f"{profile['Completeness %']:.1f}%")
         with col3:
-            st.metric("👥 Complete Rows", f"{profile['Complete Rows']:,}")
+            st.metric("Complete rows", f"{profile['Complete Rows']:,}")
         
-        st.write("**Column-wise Profile:**")
+        st.write("**Column profile:**")
         st.dataframe(col_profile, use_container_width=True)
         
-        st.subheader("👁️ Data Preview")
+        st.subheader("Data preview")
         st.dataframe(st.session_state.df.head(config.DATA_PREVIEW_ROWS), use_container_width=True)
         
-        st.subheader("📊 Summary Statistics")
+        st.subheader("Summary statistics")
         st.dataframe(st.session_state.df.describe(), use_container_width=True)
         
-        st.subheader("📋 Schema Information")
+        st.subheader("Schema")
         schema_info = pd.DataFrame({
             "Column": st.session_state.df.columns,
             "Type": st.session_state.df.dtypes.astype(str),
@@ -1322,28 +1281,28 @@ def upload_and_schema():
         st.dataframe(schema_info, use_container_width=True)
         
         # Missing Value Heatmap
-        st.subheader("🔍 Missing Data Pattern")
+        st.subheader("Missing data pattern")
         if st.session_state.df.isna().sum().sum() > 0:
             missing_fig = get_missing_value_heatmap(st.session_state.df)
             st.pyplot(missing_fig, use_container_width=True)
         else:
-            st.info("✅ No missing values detected in the dataset!")
+            st.info("No missing values detected.")
         
         # Statistical Summary
-        st.subheader("📊 Statistical Summary")
+        st.subheader("Statistical summary")
         stat_summary = core.get_statistical_summary(st.session_state.df)
         if stat_summary is not None:
             st.dataframe(stat_summary, use_container_width=True)
         else:
-            st.info("ℹ️ No numeric columns found for statistical summary.")
+            st.info("No numeric columns found for statistical summary.")
     else:
-        empty_state("📦", "No Data Yet", "Upload a CSV file or load a sample dataset to get started.")
+        empty_state("No data yet", "Upload a CSV file or load a sample dataset to get started.")
 
 def clean_data():
     """Data cleaning page."""
     st.markdown("""
     <div class="app-header">
-        <h1 class="app-title">🧹 Clean Data</h1>
+        <h1 class="app-title">Clean Data</h1>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1354,7 +1313,7 @@ def clean_data():
     """, unsafe_allow_html=True)
     
     if st.session_state.df is None:
-        empty_state("⚠️", "No Data Available", "Please upload or load a dataset first.")
+        empty_state("No data available", "Please upload or load a dataset first.")
         return
     
     # Status banner
@@ -1363,48 +1322,45 @@ def clean_data():
     size_kb = st.session_state.df.memory_usage(deep=True).sum() / 1024
     
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #252D3D 0%, #1A1F2E 100%); 
-                padding: 1.5rem; border-radius: 10px; border: 1px solid #2D3748; 
-                margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);">
-        <div style="color: #5B7FFF; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem;">📊 CURRENT DATA STATUS</div>
-        <div style="color: #E8EAED; font-size: 1.1rem; font-weight: 500;">
-            Rows: <span style="color: #5B7FFF; font-weight: 700;">{rows:,}</span> | 
-            Columns: <span style="color: #5B7FFF; font-weight: 700;">{cols}</span> | 
-            Size: <span style="color: #5B7FFF; font-weight: 700;">{size_kb:.2f} KB</span>
+    <div style="background: var(--bg-surface); padding: 1.25rem 1.5rem; border-radius: 8px;
+                border: 1px solid var(--border-subtle); margin-bottom: 1.5rem;">
+        <div style="color: var(--text-tertiary); font-weight: 500; font-size: 0.75rem; text-transform: uppercase;
+                    letter-spacing: 0.08em; margin-bottom: 0.35rem;">Current data</div>
+        <div style="color: var(--text-primary); font-size: 0.95rem;">
+            {rows:,} rows, {cols} columns, {size_kb:.2f} KB
         </div>
     </div>
     """, unsafe_allow_html=True)
     
     # Original Data Preview
-    with st.expander("📊 Original Data Preview", expanded=False):
+    with st.expander("Original data preview", expanded=False):
         st.dataframe(st.session_state.original_df.head(config.DATA_PREVIEW_ROWS), use_container_width=True)
     
-    st.subheader("🔧 Cleaning Options")
+    st.subheader("Cleaning options")
     
-    # Create two columns for cleaning options
     col1, col2 = st.columns(2)
     
     with col1:
-        st.write("**Basic Operations**")
+        st.write("**Basic operations**")
         
         st.session_state.pending_clean_options["standardize_columns"] = st.checkbox(
-            "✓ Standardize column names",
+            "Standardize column names",
             value=st.session_state.pending_clean_options.get("standardize_columns", False),
             help="Convert to lowercase with underscores"
         )
         
         st.session_state.pending_clean_options["remove_duplicates"] = st.checkbox(
-            "✓ Remove duplicates",
+            "Remove duplicates",
             value=st.session_state.pending_clean_options.get("remove_duplicates", False)
         )
         
         st.session_state.pending_clean_options["drop_missing"] = st.checkbox(
-            "✓ Drop rows with missing values",
+            "Drop rows with missing values",
             value=st.session_state.pending_clean_options.get("drop_missing", False)
         )
         
         fill_missing = st.checkbox(
-            "✓ Fill missing values",
+            "Fill missing values",
             value=st.session_state.pending_clean_options.get("fill_missing", False)
         )
         st.session_state.pending_clean_options["fill_missing"] = fill_missing
@@ -1424,20 +1380,20 @@ def clean_data():
             st.session_state.pending_clean_options["fill_value"] = fill_value
     
     with col2:
-        st.write("**Advanced Operations**")
+        st.write("**Advanced operations**")
         
         st.session_state.pending_clean_options["remove_outliers"] = st.checkbox(
-            "✓ Remove outliers (IQR method)",
+            "Remove outliers (IQR method)",
             value=st.session_state.pending_clean_options.get("remove_outliers", False)
         )
         
         st.session_state.pending_clean_options["encode_categorical"] = st.checkbox(
-            "✓ Encode categorical columns",
+            "Encode categorical columns",
             value=st.session_state.pending_clean_options.get("encode_categorical", False)
         )
         
         scale_features = st.checkbox(
-            "✓ Scale features",
+            "Scale features",
             value=st.session_state.pending_clean_options.get("scale_features", False)
         )
         st.session_state.pending_clean_options["scale_features"] = scale_features
@@ -1451,7 +1407,7 @@ def clean_data():
             st.session_state.pending_clean_options["scaler_type"] = scaler_type
     
     # Apply cleaning and show live preview
-    st.subheader("👁️ Live Preview")
+    st.subheader("Live preview")
     
     try:
         preview_df = st.session_state.original_df.copy()
@@ -1496,41 +1452,40 @@ def clean_data():
         
         original_shape = st.session_state.original_df.shape
         preview_shape = preview_df.shape
-        st.success(f"✅ Original: {original_shape[0]}×{original_shape[1]} → Cleaned: {preview_shape[0]}×{preview_shape[1]}")
+        st.success(f"Original: {original_shape[0]}x{original_shape[1]} -> Cleaned: {preview_shape[0]}x{preview_shape[1]}")
         
         st.dataframe(preview_df.head(config.DATA_PREVIEW_ROWS), use_container_width=True)
     
     except Exception as e:
-        st.error(f"❌ Error during cleaning: {str(e)}")
+        st.error(f"Error during cleaning: {str(e)}")
     
     # Action Buttons
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button("✔️ Apply", use_container_width=True, key="apply_clean"):
+        if st.button("Apply", use_container_width=True, key="apply_clean"):
             if st.session_state.pending_df is None:
-                st.error("❌ No preview available. Please adjust cleaning options first.")
+                st.error("No preview available. Adjust cleaning options first.")
             else:
                 st.session_state.df = st.session_state.pending_df.copy()
-                st.balloons()
-                st.success("✅ Cleaning applied successfully! Your data has been updated.")
+                st.success("Cleaning applied.")
                 st.rerun()
     
     with col2:
-        if st.button("↩️ Revert", use_container_width=True, key="revert_clean"):
+        if st.button("Revert", use_container_width=True, key="revert_clean"):
             st.session_state.df = st.session_state.original_df.copy()
             st.session_state.pending_clean_options = {}
-            st.info("↩️ Data reverted to original state.")
+            st.info("Data reverted to original state.")
             st.rerun()
     
     with col3:
-        if st.button("💾 Download", use_container_width=True, key="download_clean"):
+        if st.button("Download", use_container_width=True, key="download_clean"):
             if st.session_state.pending_df is None:
-                st.error("❌ No preview available. Please adjust cleaning options first.")
+                st.error("No preview available. Adjust cleaning options first.")
             else:
                 csv = st.session_state.pending_df.to_csv(index=False)
                 st.download_button(
-                    label="📥 Download CSV",
+                    label="Download CSV",
                     data=csv,
                     file_name="cleaned_data.csv",
                     mime="text/csv",
@@ -1539,17 +1494,18 @@ def clean_data():
     
     # Suggested Workflow Banner
     st.markdown("""
-    <div style="background: linear-gradient(135deg, #2A3A4A 0%, #1A2A3A 100%); padding: 1.5rem; 
-                border-radius: 10px; border-left: 4px solid #5B7FFF; margin-bottom: 2rem;">
-        <div style="color: #5B7FFF; font-weight: 600; margin-bottom: 0.5rem;">🎯 Suggested Next Steps:</div>
-        <p style="color: #E8EAED; margin: 0; font-size: 0.95rem; line-height: 1.6;">
-            1. ✅ <strong>Clean Data</strong> (current step) → 2. Engineer Features Here → 3. Go to Visualize Data to check significance → 4. Train Models with new features
+    <div style="background: var(--bg-surface); padding: 1.25rem 1.5rem; border-radius: 8px;
+                border-left: 3px solid var(--accent-muted); margin-bottom: 1.5rem;">
+        <div style="color: var(--text-tertiary); font-weight: 500; font-size: 0.75rem; text-transform: uppercase;
+                    letter-spacing: 0.08em; margin-bottom: 0.35rem;">Suggested next steps</div>
+        <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem; line-height: 1.6;">
+            Clean data (current) -> Feature engineering -> Visualize correlations -> Train models
         </p>
     </div>
     """, unsafe_allow_html=True)
     
     # Advanced Feature Engineering
-    st.subheader("⚡ Feature Engineering")
+    st.subheader("Feature engineering")
     
     numeric_cols = st.session_state.df.select_dtypes(include=[np.number]).columns.tolist()
     
@@ -1558,13 +1514,13 @@ def clean_data():
         
         with feat_col1:
             feature_type = st.selectbox(
-                "Feature Engineering Type",
+                "Feature engineering type",
                 ["Polynomial Features", "Interaction Terms", "Binning"],
                 key="feat_type"
             )
             
             if feature_type == "Polynomial Features":
-                degree = st.slider("Polynomial Degree", 2, 5, 2, key="poly_degree")
+                degree = st.slider("Polynomial degree", 2, 5, 2, key="poly_degree")
                 selected_numeric = st.multiselect(
                     "Select columns for polynomial features",
                     numeric_cols,
@@ -1572,13 +1528,13 @@ def clean_data():
                     key="poly_cols"
                 )
                 
-                if st.button("✨ Generate Polynomial Features", use_container_width=True, key="gen_poly"):
+                if st.button("Generate polynomial features", use_container_width=True, key="gen_poly"):
                     df_engineered, new_features = engineer_features(
                         st.session_state.df, selected_numeric, "polynomial", degree
                     )
                     st.session_state.df = df_engineered
-                    st.success(f"✅ Created {len(new_features)} polynomial features!")
-                    st.write(f"**New Features:** {', '.join(new_features[:5])}{'...' if len(new_features) > 5 else ''}")
+                    st.success(f"Created {len(new_features)} polynomial features.")
+                    st.write(f"**New features:** {', '.join(new_features[:5])}{'...' if len(new_features) > 5 else ''}")
             
             elif feature_type == "Interaction Terms":
                 interaction_cols = st.multiselect(
@@ -1588,16 +1544,16 @@ def clean_data():
                     key="interact_cols"
                 )
                 
-                if st.button("✨ Generate Interactions", use_container_width=True, key="gen_interact"):
+                if st.button("Generate interactions", use_container_width=True, key="gen_interact"):
                     if len(interaction_cols) >= 2:
                         df_engineered, new_features = engineer_features(
                             st.session_state.df, None, "interaction", interaction_cols=interaction_cols
                         )
                         st.session_state.df = df_engineered
-                        st.success(f"✅ Created {len(new_features)} interaction features!")
-                        st.write(f"**New Features:** {', '.join(new_features)}")
+                        st.success(f"Created {len(new_features)} interaction features.")
+                        st.write(f"**New features:** {', '.join(new_features)}")
                     else:
-                        st.warning("⚠️ Please select at least 2 columns for interactions.")
+                        st.warning("Select at least 2 columns for interactions.")
             
             else:  # Binning
                 binning_cols = st.multiselect(
@@ -1607,30 +1563,30 @@ def clean_data():
                     key="bin_cols"
                 )
                 
-                if st.button("✨ Generate Binned Features", use_container_width=True, key="gen_bin"):
+                if st.button("Generate binned features", use_container_width=True, key="gen_bin"):
                     df_engineered, new_features = engineer_features(
                         st.session_state.df, binning_cols, "binning"
                     )
                     st.session_state.df = df_engineered
-                    st.success(f"✅ Created {len(new_features)} binned features!")
+                    st.success(f"Created {len(new_features)} binned features.")
         
         with feat_col2:
-            st.info("💡 **Feature Engineering Tips:**\n\n"
-                   "• **Polynomial Features**: Creates new columns (e.g., x², y², x×y). Original features are kept.\n"
-                   "• **Interactions**: Combines features (e.g., height × weight). Shows joint effects on target.\n"
-                   "• **Binning**: Divides values into 5 equal groups (quintiles). Creates ordinal categories.\n\n"
+            st.info("**Feature engineering tips:**\n\n"
+                   "- **Polynomial**: Creates new columns (e.g., x^2, y^2, x*y). Original features are kept.\n"
+                   "- **Interactions**: Combines features (e.g., height * weight). Shows joint effects on target.\n"
+                   "- **Binning**: Divides values into 5 equal groups (quintiles). Creates ordinal categories.\n\n"
                    "**When to use:**\n"
                    "- Polynomial: When relationships are non-linear\n"
                    "- Interactions: When features influence each other\n"
                    "- Binning: For tree models or when you want to discretize continuous values")
     else:
-        st.info("ℹ️ Feature engineering requires numeric columns.")
+        st.info("Feature engineering requires numeric columns.")
 
 def visualize_data():
     """Data visualization page."""
     st.markdown("""
     <div class="app-header">
-        <h1 class="app-title">📊 Visualize Data</h1>
+        <h1 class="app-title">Visualize Data</h1>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1641,40 +1597,34 @@ def visualize_data():
     """, unsafe_allow_html=True)
     
     if st.session_state.df is None:
-        empty_state("⚠️", "No Data Available", "Please upload or load a dataset first.")
+        empty_state("No data available", "Please upload or load a dataset first.")
         return
     
-    # Create tabs for different visualization types
-    tab1, tab2, tab3, tab4 = st.tabs(["🔗 Correlations", "📈 Charts", "📉 Distributions", "🔀 Pair Plot"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Correlations", "Charts", "Distributions", "Pair Plot"])
     
     # TAB 1: CORRELATIONS & STATISTICAL TESTS
     with tab1:
-        st.subheader("Correlation Matrix with Statistical Tests")
+        st.subheader("Correlation matrix with statistical tests")
         
         numeric_df = st.session_state.df.select_dtypes(include=[np.number])
         
         if len(numeric_df.columns) >= 2:
-            # Plot correlation with significance
             corr_fig, corr_df, pval_df = plot_correlation_with_significance(st.session_state.df, numeric_df.columns.tolist())
             st.pyplot(corr_fig, use_container_width=True)
             
             st.markdown("**Legend:** Gold stars (*) = statistically significant correlations (p < 0.05)")
-            st.info("💡 Expand sections below to view detailed statistics and run hypothesis tests!")
+            st.info("Expand sections below to view detailed statistics and run hypothesis tests.")
             
-            # Option to view detailed correlation statistics
-            with st.expander("📊 Detailed Correlation Statistics", expanded=False):
+            with st.expander("Detailed correlation statistics", expanded=False):
                 col1, col2 = st.columns(2)
-                
                 with col1:
-                    st.write("**Correlation Coefficients (r):**")
+                    st.write("**Correlation coefficients (r):**")
                     st.dataframe(corr_df, use_container_width=True)
-                
                 with col2:
-                    st.write("**P-Values:**")
+                    st.write("**P-values:**")
                     st.dataframe(pval_df, use_container_width=True)
             
-            # Hypothesis testing with guidance
-            with st.expander("🔬 Hypothesis Testing", expanded=False):
+            with st.expander("Hypothesis testing", expanded=False):
                 st.markdown("""
                 **Choose the right test:**
                 - **Pearson**: Measures linear relationship (best for normally distributed data)
@@ -1683,90 +1633,86 @@ def visualize_data():
                 """)
                 
                 test_col1, test_col2, test_col3 = st.columns(3)
-                
                 with test_col1:
                     var1 = st.selectbox("Variable 1", numeric_df.columns, key="test_var1")
-                
                 with test_col2:
                     var2 = st.selectbox("Variable 2", numeric_df.columns, key="test_var2")
-                
                 with test_col3:
-                    test_type = st.selectbox("Test Type", ["pearson", "spearman", "ttest"], key="test_type")
+                    test_type = st.selectbox("Test type", ["pearson", "spearman", "ttest"], key="test_type")
                 
-                if st.button("🔍 Run Test", use_container_width=True, key="run_test"):
+                if st.button("Run test", use_container_width=True, key="run_test"):
                     if var1 != var2:
                         with st.spinner("Running statistical test..."):
                             result = core.perform_hypothesis_test(st.session_state.df, var1, var2, test_type)
                         st.dataframe(result.to_frame().T, use_container_width=True)
                         
-                        # Interpretation
                         if result.get('P-value', 1) < 0.05:
-                            st.success("✓ **Result:** Statistically significant relationship found (p < 0.05)\n\nThis means the relationship is unlikely due to random chance!")
+                            st.success("Statistically significant relationship found (p < 0.05). This means the relationship is unlikely due to random chance.")
                         else:
-                            st.info("ℹ️ **Result:** No statistically significant relationship (p ≥ 0.05)\n\nCould be due to random variation in the data.")
+                            st.info("No statistically significant relationship (p >= 0.05). Could be due to random variation in the data.")
                     else:
-                        st.warning("⚠️ Please select different variables.")
+                        st.warning("Please select different variables.")
         else:
-            st.info("ℹ️ Correlation matrix requires at least 2 numeric columns.")
+            st.info("Correlation matrix requires at least 2 numeric columns.")
     
     # TAB 2: CUSTOM CHARTS
     with tab2:
-        st.subheader("Custom Chart Creation")
+        st.subheader("Custom chart creation")
         
         col1, col2 = st.columns(2)
         with col1:
-            chart_type = st.selectbox("Chart Type", list(config.CHART_TYPES.keys()), key="chart_type")
+            chart_type = st.selectbox("Chart type", list(config.CHART_TYPES.keys()), key="chart_type")
         with col2:
-            selected_columns = st.multiselect("Select Columns", st.session_state.df.columns, key="chart_cols")
+            selected_columns = st.multiselect("Select columns", st.session_state.df.columns, key="chart_cols")
         
         if selected_columns and chart_type:
             try:
                 fig, ax = plt.subplots(figsize=config.CHART_SIZE)
-                fig.patch.set_facecolor('#1A1F2E')
-                ax.set_facecolor('#252D3D')
+                fig.patch.set_facecolor('#181b22')
+                ax.set_facecolor('#1e2129')
                 
                 if chart_type == "Histogram":
-                    st.session_state.df[selected_columns[0]].hist(bins=30, ax=ax, color='#5B7FFF', edgecolor='#2D3748', alpha=0.8)
-                    ax.set_title(f'Histogram: {selected_columns[0]}', fontweight='600', color='#E8EAED', pad=15)
-                    ax.set_xlabel(selected_columns[0], color='#E8EAED')
-                    ax.set_ylabel('Frequency', color='#E8EAED')
+                    st.session_state.df[selected_columns[0]].hist(bins=30, ax=ax, color='#6b8aed', edgecolor='#282c34', alpha=0.8)
+                    ax.set_title(f'Histogram: {selected_columns[0]}', fontweight='500', color='#dfe2e8', pad=15)
+                    ax.set_xlabel(selected_columns[0], color='#dfe2e8')
+                    ax.set_ylabel('Frequency', color='#dfe2e8')
                 
                 elif chart_type == "Boxplot":
                     st.session_state.df[selected_columns].boxplot(ax=ax, patch_artist=True)
                     for patch in ax.artists:
-                        patch.set_facecolor('#5B7FFF')
-                        patch.set_edgecolor('#7B9FFF')
-                    ax.set_title('Boxplot', fontweight='600', color='#E8EAED', pad=15)
-                    ax.set_ylabel('Value', color='#E8EAED')
+                        patch.set_facecolor('#6b8aed')
+                        patch.set_edgecolor('#4e6bc2')
+                    ax.set_title('Boxplot', fontweight='500', color='#dfe2e8', pad=15)
+                    ax.set_ylabel('Value', color='#dfe2e8')
                 
                 elif chart_type == "Scatter":
                     ax.scatter(st.session_state.df[selected_columns[0]], st.session_state.df[selected_columns[1]], 
-                              alpha=0.6, color='#5B7FFF', s=50, edgecolors='#2D3748', linewidth=0.5)
-                    ax.set_xlabel(selected_columns[0], color='#E8EAED')
-                    ax.set_ylabel(selected_columns[1], color='#E8EAED')
-                    ax.set_title(f'Scatter: {selected_columns[0]} vs {selected_columns[1]}', fontweight='600', color='#E8EAED', pad=15)
+                              alpha=0.6, color='#6b8aed', s=50, edgecolors='#282c34', linewidth=0.5)
+                    ax.set_xlabel(selected_columns[0], color='#dfe2e8')
+                    ax.set_ylabel(selected_columns[1], color='#dfe2e8')
+                    ax.set_title(f'Scatter: {selected_columns[0]} vs {selected_columns[1]}', fontweight='500', color='#dfe2e8', pad=15)
                 
                 elif chart_type == "Bar":
-                    st.session_state.df[selected_columns[0]].value_counts().plot(kind='bar', ax=ax, color='#5B7FFF', edgecolor='#2D3748')
-                    ax.set_title(f'Bar Chart: {selected_columns[0]}', fontweight='600', color='#E8EAED', pad=15)
-                    ax.set_ylabel('Count', color='#E8EAED')
-                    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, color='#E8EAED')
+                    st.session_state.df[selected_columns[0]].value_counts().plot(kind='bar', ax=ax, color='#6b8aed', edgecolor='#282c34')
+                    ax.set_title(f'Bar chart: {selected_columns[0]}', fontweight='500', color='#dfe2e8', pad=15)
+                    ax.set_ylabel('Count', color='#dfe2e8')
+                    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, color='#dfe2e8')
                 
                 elif chart_type == "Column":
-                    st.session_state.df[selected_columns[0]].value_counts().plot(kind='barh', ax=ax, color='#5B7FFF', edgecolor='#2D3748')
-                    ax.set_title(f'Column Chart: {selected_columns[0]}', fontweight='600', color='#E8EAED', pad=15)
-                    ax.set_xlabel('Count', color='#E8EAED')
+                    st.session_state.df[selected_columns[0]].value_counts().plot(kind='barh', ax=ax, color='#6b8aed', edgecolor='#282c34')
+                    ax.set_title(f'Column chart: {selected_columns[0]}', fontweight='500', color='#dfe2e8', pad=15)
+                    ax.set_xlabel('Count', color='#dfe2e8')
                 
                 elif chart_type == "Pie":
-                    colors = ['#5B7FFF', '#7B9FFF', '#4A6FFF', '#3D5BFF', '#2A47FF']
+                    colors = ['#6b8aed', '#4e6bc2', '#8ba5f0', '#3d5bc4', '#5a7ae6']
                     ax.pie(st.session_state.df[selected_columns[0]].value_counts(), 
                           labels=st.session_state.df[selected_columns[0]].value_counts().index,
-                          autopct='%1.1f%%', startangle=90, colors=colors, textprops={'color': '#E8EAED'})
-                    ax.set_title(f'Pie Chart: {selected_columns[0]}', fontweight='600', color='#E8EAED', pad=15)
+                          autopct='%1.1f%%', startangle=90, colors=colors, textprops={'color': '#dfe2e8'})
+                    ax.set_title(f'Pie chart: {selected_columns[0]}', fontweight='500', color='#dfe2e8', pad=15)
                 
-                ax.tick_params(colors='#E8EAED')
+                ax.tick_params(colors='#dfe2e8')
                 for spine in ax.spines.values():
-                    spine.set_color('#2D3748')
+                    spine.set_color('#282c34')
                     spine.set_linewidth(0.5)
                 
                 plt.tight_layout()
@@ -1777,7 +1723,7 @@ def visualize_data():
     
     # TAB 3: DISTRIBUTION ANALYSIS
     with tab3:
-        st.subheader("Distribution Analysis")
+        st.subheader("Distribution analysis")
         
         numeric_cols = st.session_state.df.select_dtypes(include=[np.number]).columns.tolist()
         
@@ -1788,58 +1734,58 @@ def visualize_data():
             
             if dist_col:
                 fig, ax = plt.subplots(figsize=config.CHART_SIZE)
-                fig.patch.set_facecolor('#1A1F2E')
-                ax.set_facecolor('#252D3D')
+                fig.patch.set_facecolor('#181b22')
+                ax.set_facecolor('#1e2129')
                 
                 if dist_type == "Histogram with KDE":
-                    st.session_state.df[dist_col].hist(bins=30, ax=ax, color='#5B7FFF', 
-                                                        alpha=0.6, edgecolor='#2D3748', density=True)
-                    st.session_state.df[dist_col].plot(kind='kde', ax=ax, color='#FF6B6B', linewidth=2.5)
-                    ax.set_title(f'Distribution: {dist_col} (Histogram + KDE)', fontweight='600', color='#E8EAED', pad=15)
+                    st.session_state.df[dist_col].hist(bins=30, ax=ax, color='#6b8aed', 
+                                                        alpha=0.6, edgecolor='#282c34', density=True)
+                    st.session_state.df[dist_col].plot(kind='kde', ax=ax, color='#f87171', linewidth=2.5)
+                    ax.set_title(f'Distribution: {dist_col} (Histogram + KDE)', fontweight='500', color='#dfe2e8', pad=15)
                 
                 elif dist_type == "KDE Plot":
-                    st.session_state.df[dist_col].plot(kind='kde', ax=ax, color='#5B7FFF', linewidth=3)
+                    st.session_state.df[dist_col].plot(kind='kde', ax=ax, color='#6b8aed', linewidth=3)
                     ax.fill_between(ax.get_lines()[0].get_xdata(), ax.get_lines()[0].get_ydata(), 
-                                   alpha=0.3, color='#5B7FFF')
-                    ax.set_title(f'KDE Plot: {dist_col}', fontweight='600', color='#E8EAED', pad=15)
+                                   alpha=0.3, color='#6b8aed')
+                    ax.set_title(f'KDE plot: {dist_col}', fontweight='500', color='#dfe2e8', pad=15)
                 
                 elif dist_type == "Violin Plot":
                     parts = ax.violinplot([st.session_state.df[dist_col].dropna()], 
                                          positions=[0], showmeans=True, showmedians=True)
                     for pc in parts['bodies']:
-                        pc.set_facecolor('#5B7FFF')
+                        pc.set_facecolor('#6b8aed')
                         pc.set_alpha(0.7)
                     for partname in ('cbars', 'cmins', 'cmaxes', 'cmedians', 'cmeans'):
                         if partname in parts:
                             vp = parts[partname]
-                            vp.set_edgecolor('#E8EAED')
+                            vp.set_edgecolor('#dfe2e8')
                             vp.set_linewidth(2)
                     ax.set_xticks([0])
                     ax.set_xticklabels([dist_col])
-                    ax.set_title(f'Violin Plot: {dist_col}', fontweight='600', color='#E8EAED', pad=15)
+                    ax.set_title(f'Violin plot: {dist_col}', fontweight='500', color='#dfe2e8', pad=15)
                 
                 ax.set_ylabel('Density' if 'KDE' in dist_type or 'Histogram' in dist_type else 'Frequency', 
-                             color='#E8EAED', fontweight='600')
-                ax.set_xlabel(dist_col, color='#E8EAED', fontweight='600')
-                ax.tick_params(colors='#E8EAED')
+                             color='#dfe2e8', fontweight='500')
+                ax.set_xlabel(dist_col, color='#dfe2e8', fontweight='500')
+                ax.tick_params(colors='#dfe2e8')
                 
                 for spine in ax.spines.values():
-                    spine.set_color('#2D3748')
+                    spine.set_color('#282c34')
                     spine.set_linewidth(0.5)
                 
                 plt.tight_layout()
                 st.pyplot(fig, use_container_width=True)
         else:
-            st.info("ℹ️ Distribution analysis requires at least one numeric column.")
+            st.info("Distribution analysis requires at least one numeric column.")
     
     # TAB 4: PAIR PLOT
     with tab4:
-        st.subheader("Pair Plot Analysis")
+        st.subheader("Pair plot analysis")
         
         numeric_cols = st.session_state.df.select_dtypes(include=[np.number]).columns.tolist()
         
         if len(numeric_cols) >= 2:
-            if st.button("📊 Generate Pair Plot", help="Shows pairwise relationships between numeric features", 
+            if st.button("Generate pair plot", help="Shows pairwise relationships between numeric features", 
                         use_container_width=True, key="pair_plot_btn"):
                 with st.spinner("Generating pair plot..."):
                     pair_fig = plot_pair_plot(st.session_state.df, numeric_cols)
@@ -1847,13 +1793,13 @@ def visualize_data():
                         st.pyplot(pair_fig, use_container_width=True)
                         st.caption("Pair plot showing relationships between all numeric features (diagonal: histograms, off-diagonal: scatter plots)")
         else:
-            st.info("ℹ️ Pair plots require at least 2 numeric columns.")
+            st.info("Pair plots require at least 2 numeric columns.")
 
 def page_model_training():
     """Model training and comparison page."""
     st.markdown("""
     <div class="app-header">
-        <h1 class="app-title">🤖 Model Training</h1>
+        <h1 class="app-title">Model Training</h1>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1864,24 +1810,21 @@ def page_model_training():
     """, unsafe_allow_html=True)
     
     if st.session_state.df is None:
-        empty_state("⚠️", "No Data Available", "Please upload or load a dataset first.")
+        empty_state("No data available", "Please upload or load a dataset first.")
         return
     
-    # Model Configuration
-    st.subheader("⚙️ Model Configuration")
+    st.subheader("Model configuration")
     
     col1, col2 = st.columns(2)
     
     with col1:
-        target_column = st.selectbox("Target Column", st.session_state.df.columns, key="target_col")
+        target_column = st.selectbox("Target column", st.session_state.df.columns, key="target_col")
     
-    # Auto-detect mode based on target column
     target_data = st.session_state.df[target_column]
     is_numeric = pd.api.types.is_numeric_dtype(target_data)
     is_categorical = pd.api.types.is_categorical_dtype(target_data) or target_data.dtype == 'object'
     unique_values = target_data.nunique()
     
-    # Recommend mode based on data
     if is_categorical or (is_numeric and unique_values <= 10):
         recommended_mode = "Classification"
     else:
@@ -1893,54 +1836,46 @@ def page_model_training():
                            key="mode",
                            help=f"Auto-detected: {recommended_mode} (based on target column)")
     
-    # Validate mode selection
     if mode == "Classification" and is_numeric and unique_values > 10:
-        st.warning(f"⚠️ Warning: Classification selected but target has {unique_values} unique continuous values. Consider using Regression instead.")
+        st.warning(f"Classification selected but target has {unique_values} unique continuous values. Consider using Regression instead.")
     elif mode == "Regression" and is_categorical:
-        st.warning("⚠️ Warning: Regression selected but target is categorical. Consider using Classification instead.")
+        st.warning("Regression selected but target is categorical. Consider using Classification instead.")
     
-    # Feature Selection
-    st.subheader("🎯 Feature Selection")
+    st.subheader("Feature selection")
     available_features = [col for col in st.session_state.df.columns if col != target_column]
-    selected_features = st.multiselect("Select Features", available_features, default=available_features[:min(3, len(available_features))], key="features")
+    selected_features = st.multiselect("Select features", available_features, default=available_features[:min(3, len(available_features))], key="features")
     
     if not selected_features:
-        st.warning("⚠️ Please select at least one feature.")
+        st.warning("Please select at least one feature.")
         return
     
-    # Model Selection
-    st.subheader("📦 Model Selection")
+    st.subheader("Model selection")
     models = config.CLASSIFICATION_MODELS if mode == "Classification" else config.REGRESSION_MODELS
-    selected_models = st.multiselect("Select Models", list(models.keys()), default=[list(models.keys())[0]], key="models")
+    selected_models = st.multiselect("Select models", list(models.keys()), default=[list(models.keys())[0]], key="models")
     
     if not selected_models:
-        st.warning("⚠️ Please select at least one model.")
+        st.warning("Please select at least one model.")
         return
     
-    # Train Button
-    if st.button("🚀 Train Models", use_container_width=True, key="train_btn"):
-        # Prepare data
+    if st.button("Train models", use_container_width=True, key="train_btn"):
         X = st.session_state.df[selected_features]
         y = st.session_state.df[target_column]
         
-        # Validate data
         is_valid, message = core.validate_data_for_modeling(X, y)
         if not is_valid:
             st.error(message)
             return
         
-        # Validate mode-target compatibility
         unique_y = y.nunique()
         if mode == "Classification" and unique_y > 10:
-            st.error(f"❌ Error: Classification mode requires discrete target values, but found {unique_y} unique continuous values. Please select Regression mode instead.")
+            st.error(f"Classification mode requires discrete target values, but found {unique_y} unique continuous values. Please select Regression mode instead.")
             return
         
         if mode == "Regression" and pd.api.types.is_categorical_dtype(y):
-            st.error("❌ Error: Regression mode requires numeric target values, but found categorical data. Please select Classification mode instead.")
+            st.error("Regression mode requires numeric target values, but found categorical data. Please select Classification mode instead.")
             return
         
-        # Train models
-        st.subheader("📈 Training Results")
+        st.subheader("Training results")
         results = []
         model_instances = {}
         
@@ -1956,7 +1891,6 @@ def page_model_training():
                 status_text.text(f"Training {model_name}...")
                 progress_bar.progress((idx + 1) / len(selected_models))
                 
-                # Create model instance based on mode and type
                 if mode == "Classification":
                     if model_name == "Logistic Regression":
                         model = LogisticRegression(max_iter=1000, random_state=config.RANDOM_STATE)
@@ -1972,19 +1906,14 @@ def page_model_training():
                     else:
                         model = DecisionTreeRegressor(random_state=config.RANDOM_STATE)
                 
-                # Train
                 model.fit(X_train, y_train)
-                
-                # Predict
                 y_pred = model.predict(X_test)
                 
-                # Get probability predictions for classification (for ROC curve)
                 y_pred_proba = None
                 is_binary = mode == "Classification" and unique_y == 2
                 if is_binary and hasattr(model, 'predict_proba'):
                     y_pred_proba = model.predict_proba(X_test)[:, 1]
                 
-                # Calculate metrics
                 if mode == "Classification":
                     test_metric = accuracy_score(y_test, y_pred)
                     cv_scores = cross_val_score(model, X_train, y_train, cv=config.CROSS_VAL_FOLDS, scoring='accuracy')
@@ -2013,89 +1942,81 @@ def page_model_training():
         progress_bar.empty()
         status_text.empty()
         
-        # Store results
         st.session_state.trained_models = model_instances
         
-        # Display results
         results_df = pd.DataFrame(results)
         st.dataframe(results_df, use_container_width=True)
         
-        # Highlight best model
         best_idx = results_df["Test Metric"].idxmax()
         best_model = results_df.loc[best_idx, "Model"]
         best_score = results_df.loc[best_idx, "Test Metric"]
         
-        st.success(f"🏆 Best Model: **{best_model}** (Score: {best_score:.4f})")
+        st.success(f"Best model: **{best_model}** (Score: {best_score:.4f})")
         
-        # Model Diagnostics
-        st.subheader("🔍 Model Diagnostics")
+        st.subheader("Model diagnostics")
         
         col1, col2 = st.columns(2)
         
         with col1:
             if mode == "Classification":
-                st.write("**Confusion Matrix (Best Model)**")
+                st.write("**Confusion matrix (best model)**")
                 best_model_data = st.session_state.trained_models[best_model]
                 cm = confusion_matrix(best_model_data["y_test"], best_model_data["y_pred"])
                 
-                # Create normalized confusion matrix for percentages
                 cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
                 
                 fig, ax = plt.subplots(figsize=(8, 6))
-                fig.patch.set_facecolor('#1A1F2E')
-                ax.set_facecolor('#252D3D')
+                fig.patch.set_facecolor('#181b22')
+                ax.set_facecolor('#1e2129')
                 
-                # Create heatmap
                 heatmap = sns.heatmap(cm, annot=False, cmap='Blues', ax=ax, cbar_kws={'label': 'Count'},
-                           linewidths=0.5, linecolor='#1A1F2E')
+                           linewidths=0.5, linecolor='#181b22')
                 
-                # Add custom annotations with counts and percentages
                 for i in range(cm.shape[0]):
                     for j in range(cm.shape[1]):
                         count = cm[i, j]
                         pct = cm_normalized[i, j] * 100
                         text = ax.text(j + 0.5, i + 0.5, f'{int(count)}\n({pct:.1f}%)',
-                                      ha="center", va="center", color='#E8EAED' if count < cm.max()/2 else '#0F1419',
+                                      ha="center", va="center", color='#dfe2e8' if count < cm.max()/2 else '#111318',
                                       fontweight='600', fontsize=11)
                 
-                ax.set_xlabel('Predicted', color='#E8EAED', fontweight='600', fontsize=12)
-                ax.set_ylabel('Actual', color='#E8EAED', fontweight='600', fontsize=12)
-                ax.set_title('Confusion Matrix', color='#E8EAED', fontweight='600', fontsize=13, pad=15)
-                ax.tick_params(colors='#E8EAED')
+                ax.set_xlabel('Predicted', color='#dfe2e8', fontweight='500', fontsize=12)
+                ax.set_ylabel('Actual', color='#dfe2e8', fontweight='500', fontsize=12)
+                ax.set_title('Confusion matrix', color='#dfe2e8', fontweight='500', fontsize=13, pad=15)
+                ax.tick_params(colors='#dfe2e8')
                 cbar = heatmap.collections[0].colorbar
                 if cbar:
-                    cbar.set_label('Count', color='#E8EAED')
-                    cbar.ax.tick_params(colors='#E8EAED')
+                    cbar.set_label('Count', color='#dfe2e8')
+                    cbar.ax.tick_params(colors='#dfe2e8')
                 st.pyplot(fig, use_container_width=True)
         
         with col2:
             if mode == "Regression":
-                st.write("**Residuals Plot (Best Model)**")
+                st.write("**Residuals plot (best model)**")
                 best_model_data = st.session_state.trained_models[best_model]
                 residuals = best_model_data["y_test"] - best_model_data["y_pred"]
                 fig, ax = plt.subplots(figsize=(8, 6))
-                fig.patch.set_facecolor('#1A1F2E')
-                ax.set_facecolor('#252D3D')
-                ax.scatter(best_model_data["y_pred"], residuals, alpha=0.6, color='#5B7FFF', s=50, edgecolors='#2D3748')
-                ax.axhline(y=0, color='#FF6B6B', linestyle='--', linewidth=2)
-                ax.set_xlabel('Predicted Values', color='#E8EAED', fontweight='600')
-                ax.set_ylabel('Residuals', color='#E8EAED', fontweight='600')
-                ax.set_title('Residuals Plot', color='#E8EAED', fontweight='600', pad=15)
-                ax.tick_params(colors='#E8EAED')
+                fig.patch.set_facecolor('#181b22')
+                ax.set_facecolor('#1e2129')
+                ax.scatter(best_model_data["y_pred"], residuals, alpha=0.6, color='#6b8aed', s=50, edgecolors='#282c34')
+                ax.axhline(y=0, color='#f87171', linestyle='--', linewidth=2)
+                ax.set_xlabel('Predicted values', color='#dfe2e8', fontweight='500')
+                ax.set_ylabel('Residuals', color='#dfe2e8', fontweight='500')
+                ax.set_title('Residuals plot', color='#dfe2e8', fontweight='500', pad=15)
+                ax.tick_params(colors='#dfe2e8')
                 for spine in ax.spines.values():
-                    spine.set_color('#2D3748')
+                    spine.set_color('#282c34')
                 st.pyplot(fig, use_container_width=True)
             elif mode == "Classification":
                 best_model_data = st.session_state.trained_models[best_model]
                 if best_model_data.get("is_binary") and best_model_data["y_pred_proba"] is not None:
-                    st.write("**ROC Curve (Best Model)**")
+                    st.write("**ROC curve (best model)**")
                     roc_fig, roc_auc = plot_roc_curve(best_model_data["y_test"], best_model_data["y_pred_proba"], best_model)
                     st.pyplot(roc_fig, use_container_width=True)
                 else:
-                    st.info("ℹ️ ROC curve is available only for binary classification with probability outputs.")
+                    st.info("ROC curve is available only for binary classification with probability outputs.")
         
-        # Sample Predictions
-        st.subheader("📋 Sample Predictions")
+        st.subheader("Sample predictions")
         best_model_data = st.session_state.trained_models[best_model]
         sample_predictions = pd.DataFrame({
             "Actual": best_model_data["y_test"].values[:10],
@@ -2103,16 +2024,14 @@ def page_model_training():
         })
         st.dataframe(sample_predictions, use_container_width=True)
         
-        # Engineered Features Notice
         engineered_cols = [col for col in st.session_state.df.columns 
                           if any(x in col for x in ['_poly', '_x_', '_binned'])]
         if engineered_cols:
-            st.success(f"✅ Using {len(engineered_cols)} engineered features from Clean Data page")
-            with st.expander("📋 View engineered features"):
+            st.success(f"Using {len(engineered_cols)} engineered features from Clean Data page")
+            with st.expander("View engineered features"):
                 st.write(engineered_cols)
         
-        # Report Export
-        st.subheader("📄 Export Report")
+        st.subheader("Export report")
         profile, col_profile = generate_data_profile(st.session_state.df)
         stat_summary = core.get_statistical_summary(st.session_state.df)
         
@@ -2120,18 +2039,17 @@ def page_model_training():
                                            trained_models=st.session_state.trained_models, mode=mode)
         
         st.download_button(
-            label="📥 Download HTML Report",
+            label="Download HTML report",
             data=html_report,
             file_name=f"analysis_report_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.html",
             mime="text/html",
             use_container_width=True
         )
         
-        # Model Export
-        st.subheader("💾 Export Model")
+        st.subheader("Export model")
         model_bytes = pickle.dumps(st.session_state.trained_models[best_model]["model"])
         st.download_button(
-            label="📥 Download Best Model (Pickle)",
+            label="Download best model (pickle)",
             data=model_bytes,
             file_name=f"{best_model.lower().replace(' ', '_')}.pkl",
             mime="application/octet-stream",
@@ -2142,92 +2060,73 @@ def page_model_training():
 # MAIN APP
 # ============================================================================
 
-# Sidebar Navigation with Optimized Styling
+# Sidebar Navigation
 with st.sidebar:
-    # Sidebar Header
     st.markdown("""
-    <div style="
-        padding: 1.5rem 0 1rem 0;
-        text-align: center;
-        border-bottom: 2px solid #5B7FFF;
-        margin-bottom: 1.5rem;
-    ">
-        <h2 style="margin: 0; color: #E8EAED; font-size: 1.3rem;">🚀 Navigation</h2>
+    <div style="padding: 1.25rem 0 1rem 0; text-align: center; border-bottom: 1px solid #282c34; margin-bottom: 1.25rem;">
+        <h2 style="margin: 0; color: #dfe2e8; font-size: 1.1rem; font-weight: 500;">Navigation</h2>
     </div>
     """, unsafe_allow_html=True)
     
-    # Main Navigation Menu
     selected = option_menu(
         menu_title=None,
         options=config.STEP_NAMES,
-        icons=["🏠", "📤", "🧹", "📊", "🤖"],
+        icons=None,
         default_index=st.session_state.current_step,
         orientation="vertical",
         key="main_menu",
         styles={
             "container": {
-                "padding": "0.75rem 0 !important",
-                "background-color": "#1A1F2E",
+                "padding": "0.5rem 0 !important",
+                "background-color": "#181b22",
                 "border-radius": "0px"
             },
             "icon": {
-                "color": "#5B7FFF",
-                "font-size": "20px"
+                "color": "#6b8aed",
+                "font-size": "18px"
             },
             "nav-link": {
-                "font-size": "15px",
+                "font-size": "0.9rem",
                 "text-align": "left",
-                "margin": "0.5rem 0",
-                "--hover-color": "#252D3D",
-                "color": "#9CA3AF",
-                "border-radius": "8px",
-                "padding": "0.85rem 1rem",
-                "font-weight": "500",
+                "margin": "0.35rem 0",
+                "color": "#8b9099",
+                "border-radius": "6px",
+                "padding": "0.7rem 1rem",
+                "font-weight": "400",
                 "border": "1px solid transparent",
-                "transition": "all 0.2s ease"
+                "transition": "color 0.15s ease, background-color 0.15s ease"
             },
             "nav-link-selected": {
-                "background": "linear-gradient(90deg, #5B7FFF 0%, #7B9FFF 100%) !important",
-                "color": "white !important",
-                "border-radius": "8px",
-                "font-weight": "700",
-                "border": "1px solid #5B7FFF",
-                "box-shadow": "0 4px 12px rgba(91, 127, 255, 0.3)"
+                "background": "#252830 !important",
+                "color": "#dfe2e8 !important",
+                "border-radius": "6px",
+                "font-weight": "500",
+                "border": "1px solid #282c34"
             }
         }
     )
     
-    # Update current_step when selection changes
     for i, name in enumerate(config.STEP_NAMES):
         if selected == name:
             st.session_state.current_step = i
             break
     
-    # Sidebar Help Section
-    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
     st.divider()
     
     st.markdown(f"""
-    <div class="help-box" style="margin-top: 1rem;">
-        <strong style="color: #5B7FFF;">📍 Current Step</strong><br><br>
-        <span style="font-size: 0.95rem;">{config.STEP_NAMES[st.session_state.current_step]}</span>
-        <hr style="margin: 1rem 0; border: none; border-top: 1px solid rgba(91, 127, 255, 0.2);">
-        <span style="font-size: 0.85rem; line-height: 1.5;">{config.HELP_TEXTS[st.session_state.current_step]}</span>
+    <div class="help-box" style="margin-top: 0.75rem;">
+        <strong style="color: var(--text-tertiary); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;">Current step</strong>
+        <div style="font-size: 0.9rem; color: var(--text-primary); margin-top: 0.35rem;">{config.STEP_NAMES[st.session_state.current_step]}</div>
+        <hr style="margin: 0.75rem 0; border: none; border-top: 1px solid var(--border);">
+        <span style="font-size: 0.8rem; line-height: 1.5; color: var(--text-secondary);">{config.HELP_TEXTS[st.session_state.current_step]}</span>
     </div>
     """, unsafe_allow_html=True)
     
-    # Sidebar Footer
     st.markdown("""
-    <div style="
-        margin-top: 2rem;
-        padding-top: 1rem;
-        border-top: 1px solid #2D3748;
-        text-align: center;
-        color: #9CA3AF;
-        font-size: 0.8rem;
-    ">
-        <p style="margin: 0.5rem 0;">AI Data Science Assistant</p>
-        <p style="margin: 0.5rem 0; opacity: 0.7;">v1.0.0</p>
+    <div style="margin-top: 1.5rem; padding-top: 0.75rem; border-top: 1px solid #282c34; text-align: center; color: #5c6068; font-size: 0.75rem;">
+        <p style="margin: 0.35rem 0;">AI Data Science Assistant</p>
+        <p style="margin: 0.35rem 0; opacity: 0.7;">v1.0.0</p>
     </div>
     """, unsafe_allow_html=True)
 

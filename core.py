@@ -6,25 +6,25 @@ from scipy import stats
 def validate_data_for_modeling(X, y):
     """Validate data before model training."""
     if X.isna().any().any():
-        return False, "❌ Features contain missing values. Please clean data first."
+        return False, "Features contain missing values. Please clean data first."
 
     if y.isna().any():
-        return False, "❌ Target contains missing values. Please clean data first."
+        return False, "Target contains missing values. Please clean data first."
 
     numeric_X = X.select_dtypes(include=[np.number])
     if not numeric_X.empty and np.isinf(numeric_X).any().any():
-        return False, "❌ Features contain infinite values. Please clean data first."
+        return False, "Features contain infinite values. Please clean data first."
 
     if pd.api.types.is_numeric_dtype(y) and np.isinf(y).any():
-        return False, "❌ Target contains infinite values. Please clean data first."
+        return False, "Target contains infinite values. Please clean data first."
 
     if len(X) == 0 or len(y) == 0:
-        return False, "❌ No data available for training."
+        return False, "No data available for training."
 
     if len(X) != len(y):
-        return False, "❌ Feature and target length mismatch."
+        return False, "Feature and target length mismatch."
 
-    return True, "✅ Data validation passed"
+    return True, "Data validation passed"
 
 
 def calculate_correlation_significance(df, numeric_cols):
@@ -85,7 +85,7 @@ def perform_hypothesis_test(df, col1, col2, test_type='pearson'):
                     'Test': test_label,
                     'Correlation': corr,
                     'P-value': pval,
-                    'Significant': 'Yes ✓' if pval < 0.05 else 'No ✗',
+                    'Significant': 'Yes' if pval < 0.05 else 'No',
                     'Sample Size': len(paired)
                 }
             except Exception:
@@ -114,7 +114,7 @@ def perform_hypothesis_test(df, col1, col2, test_type='pearson'):
                 'Test': 'Independent T-Test',
                 'T-Statistic': stat,
                 'P-value': pval,
-                'Significant': 'Yes ✓' if pval < 0.05 else 'No ✗',
+                'Significant': 'Yes' if pval < 0.05 else 'No',
                 'Sample Size 1': len(valid_data_1),
                 'Sample Size 2': len(valid_data_2)
             }

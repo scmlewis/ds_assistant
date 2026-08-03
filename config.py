@@ -2,11 +2,11 @@
 
 # Workflow Steps Definition
 STEPS = {
-    0: {"name": "🏠 Welcome", "help": "Welcome to the AI Data Science Assistant! Start by uploading your dataset or loading a sample dataset to begin your data science journey."},
-    1: {"name": "📤 Upload Data", "help": "Upload a CSV file or load a sample dataset (Iris for classification, Diabetes for regression)."},
-    2: {"name": "🧹 Clean Data", "help": "Apply data cleaning operations: remove duplicates, handle missing values, standardize columns, and scale features."},
-    3: {"name": "📊 Visualize", "help": "Create visualizations including correlation heatmaps and custom charts to explore your data."},
-    4: {"name": "🤖 Model", "help": "Train and compare machine learning models for classification or regression tasks."},
+    0: {"name": "Welcome", "help": "Start by uploading your dataset or loading a sample dataset."},
+    1: {"name": "Upload Data", "help": "Upload a CSV file or load a sample dataset (Iris for classification, Diabetes for regression)."},
+    2: {"name": "Clean Data", "help": "Apply data cleaning operations: remove duplicates, handle missing values, standardize columns, and scale features."},
+    3: {"name": "Visualize", "help": "Create visualizations including correlation heatmaps and custom charts to explore your data."},
+    4: {"name": "Model", "help": "Train and compare machine learning models for classification or regression tasks."},
 }
 
 STEP_NAMES = [step["name"] for step in STEPS.values()]
@@ -56,13 +56,13 @@ HEATMAP_SIZE = (12, 10)
 CHART_SIZE = (10, 6)
 
 # Theme Colors
-PRIMARY_COLOR = "#667eea"
-SECONDARY_COLOR = "#764ba2"
-BACKGROUND_DARK = "#181d29"
-SIDEBAR_BACKGROUND = "#1a1f2e"
-TEXT_COLOR = "#e5e7eb"
-HOVER_COLOR = "#23293a"
-ACCENT_COLOR = "#10b981"
+PRIMARY_COLOR = "#6b8aed"
+SECONDARY_COLOR = "#4e6bc2"
+BACKGROUND_DARK = "#111318"
+SIDEBAR_BACKGROUND = "#181b22"
+TEXT_COLOR = "#dfe2e8"
+HOVER_COLOR = "#252830"
+ACCENT_COLOR = "#4ade80"
 
 # Disabled AI Configuration (for future use)
 # AI_MODELS = ["llama-3.1-8b-instant", "mixtral-8x7b-32768"]
