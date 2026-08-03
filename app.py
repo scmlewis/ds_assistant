@@ -383,6 +383,80 @@ def apply_custom_styling():
         color: var(--text-primary);
     }
 
+    /* Landing — capability cards */
+    .cap-card {
+        background-color: var(--bg-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 8px;
+        padding: 1.5rem 1.75rem;
+        margin-bottom: 0.75rem;
+        min-height: 170px;
+        transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .cap-card:hover {
+        border-color: var(--border);
+        background-color: var(--bg-elevated);
+        transform: translateY(-2px);
+    }
+
+    .cap-index {
+        color: var(--accent-muted);
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        margin-bottom: 0.5rem;
+    }
+
+    .cap-title {
+        color: var(--text-primary);
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.2px;
+    }
+
+    .cap-card p {
+        color: var(--text-secondary);
+        margin: 0;
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    /* Landing — export CTA band */
+    .cta-band {
+        background-color: rgba(107, 138, 237, 0.07);
+        border: 1px solid rgba(107, 138, 237, 0.25);
+        border-left: 3px solid var(--accent);
+        border-radius: 10px;
+        padding: 1.75rem 2rem;
+        margin: 0.25rem 0 2rem 0;
+    }
+
+    .cta-kicker {
+        color: var(--accent);
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        margin-bottom: 0.35rem;
+    }
+
+    .cta-title {
+        color: var(--text-primary);
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 0.3rem;
+        letter-spacing: -0.2px;
+    }
+
+    .cta-text {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin: 0;
+    }
+
     /* Responsive */
     @media (max-width: 800px) {
         .stButton > button {
@@ -1075,81 +1149,93 @@ def navigation_buttons():
 
 def landing_page():
     """Landing page with welcome message."""
-    # Hero — clean, no box
+    # Hero — value-proposition headline
     st.markdown("""
     <div style="margin-bottom: 2.5rem;">
-        <h1 style="font-size: 2.25rem; font-weight: 700; color: var(--text-primary); margin: 0 0 0.5rem 0; letter-spacing: -0.5px;">
-            AI Data Science Assistant
+        <div style="color: var(--accent); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.9rem;">AI Data Science Assistant</div>
+        <h1 style="font-size: 2.5rem; font-weight: 700; color: var(--text-primary); margin: 0 0 1rem 0; letter-spacing: -0.5px; line-height: 1.15; max-width: 760px;">
+            From raw CSV to a trained model — without writing code.
         </h1>
-        <div style="width: 48px; height: 3px; background: var(--accent); border-radius: 2px; margin-bottom: 1rem;"></div>
-        <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0; font-weight: 400;">
-            Go from raw CSV to trained model without writing code.
+        <div style="width: 48px; height: 3px; background: var(--accent); border-radius: 2px; margin-bottom: 1.25rem;"></div>
+        <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0; font-weight: 400; max-width: 620px;">
+            Upload a file, clean it, explore it, and compare models in a few clicks. No Python required.
         </p>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Top row — 3 compact cards, each with a different accent treatment
-    c1, c2, c3 = st.columns(3)
-    
+
+    if st.button("Start analyzing", key="hero_cta"):
+        st.session_state.current_step = 1
+        st.rerun()
+
+    st.markdown("""
+    <div style="height: 2rem;"></div>
+    """, unsafe_allow_html=True)
+
+    # Capabilities — balanced 2x2 grid, consistent card system
+    c1, c2 = st.columns(2)
+
     with c1:
         st.markdown("""
-        <div style="background: var(--bg-surface); padding: 1.25rem 1.5rem; border-radius: 8px; border-left: 3px solid var(--accent); margin-bottom: 0.75rem; min-height: 120px;">
-            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem;">Data profiling</div>
-            <p style="color: var(--text-secondary); margin: 0; font-size: 0.85rem; line-height: 1.55;">
-                Column types, missing values, summary stats, correlation matrix with p-values.
-            </p>
+        <div class="cap-card">
+            <div class="cap-index">01</div>
+            <div class="cap-title">Data profiling</div>
+            <p>Column types, missing values, summary statistics, and a correlation matrix with p-values — instantly.</p>
         </div>
         """, unsafe_allow_html=True)
-    
+
     with c2:
         st.markdown("""
-        <div style="background: var(--bg-surface); padding: 1.25rem 1.5rem; border-radius: 8px; border-top: 3px solid #4ade80; margin-bottom: 0.75rem; min-height: 120px;">
-            <div style="color: #4ade80; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem;">Cleaning</div>
-            <p style="color: var(--text-secondary); margin: 0; font-size: 0.85rem; line-height: 1.55;">
-                Dedup, impute, encode, scale, and remove outliers. Live preview before you commit.
-            </p>
+        <div class="cap-card">
+            <div class="cap-index">02</div>
+            <div class="cap-title">Cleaning</div>
+            <p>Deduplication, imputation, encoding, scaling, and outlier removal — with a live before/after preview.</p>
         </div>
         """, unsafe_allow_html=True)
-    
+
+    c3, c4 = st.columns(2)
+
     with c3:
         st.markdown("""
-        <div style="background: var(--bg-surface); padding: 1.25rem 1.5rem; border-radius: 8px; border-right: 3px solid #facc15; margin-bottom: 0.75rem; min-height: 120px;">
-            <div style="color: #facc15; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem;">Visualization</div>
-            <p style="color: var(--text-secondary); margin: 0; font-size: 0.85rem; line-height: 1.55;">
-                Histograms, boxplots, scatter, bar, KDE, violin, and pair plots on a dark theme.
-            </p>
+        <div class="cap-card">
+            <div class="cap-index">03</div>
+            <div class="cap-title">Visualization</div>
+            <p>Histograms, boxplots, scatter, KDE, violin, and pair plots, all in a consistent dark theme.</p>
         </div>
         """, unsafe_allow_html=True)
-    
-    # Bottom row — Model Training (featured) + Export (CTA)
-    c4, c5 = st.columns([3, 2])
-    
+
     with c4:
         st.markdown("""
-        <div style="background: linear-gradient(135deg, rgba(107,138,237,0.08) 0%, var(--bg-surface) 100%); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid rgba(107,138,237,0.2); margin-bottom: 0.75rem;">
-            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Model training</div>
-            <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem; line-height: 1.6;">
-                Auto-detects classification vs regression. Trains Logistic Regression, Random Forest, and Decision Tree with cross-validation. Confusion matrices, ROC curves, feature importance.
-            </p>
+        <div class="cap-card">
+            <div class="cap-index">04</div>
+            <div class="cap-title">Model training</div>
+            <p>Auto-detects classification vs regression and trains three models with cross-validation, ROC curves, and feature importance.</p>
         </div>
         """, unsafe_allow_html=True)
-    
-    with c5:
-        st.markdown("""
-        <div style="background: var(--bg-elevated); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); margin-bottom: 0.75rem;">
-            <div style="color: var(--text-tertiary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Export</div>
-            <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem; line-height: 1.6;">
-                Download cleaned data as CSV, trained models as pickle, and a full HTML analysis report.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Tips — subtle, single accent
+
+    # Export — accent CTA band
     st.markdown("""
-    <div style="padding: 1.25rem 1.5rem; border-radius: 8px; border: 1px dashed var(--border); font-size: 0.82rem; color: var(--text-tertiary); line-height: 1.9;">
-        <strong style="color: var(--text-secondary);">Try the sample datasets first</strong> — Iris and Diabetes are built in, no upload needed.<br>
-        <strong style="color: var(--text-secondary);">Live preview is your safety net</strong> — all cleaning ops show before/after before you commit.<br>
-        <strong style="color: var(--text-secondary);">Data persists across pages</strong> — navigate freely, your work is preserved.
+    <div class="cta-band">
+        <div class="cta-kicker">Export</div>
+        <div class="cta-title">Take your results with you</div>
+        <p class="cta-text">Download the cleaned data as CSV, the trained models as pickle files, and a full HTML analysis report.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Quick tips — subtle bullet list
+    st.markdown("""
+    <div style="display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 2rem;">
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+            <div style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 0.5rem;"></div>
+            <div style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">Start with the built-in Iris or Diabetes datasets — no upload needed.</div>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+            <div style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 0.5rem;"></div>
+            <div style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">Live previews show exactly what changes before you commit a cleaning step.</div>
+        </div>
+        <div style="display: flex; gap: 0.75rem; align-items: flex-start;">
+            <div style="width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 0.5rem;"></div>
+            <div style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5;">Your data persists across pages — navigate freely without losing progress.</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
