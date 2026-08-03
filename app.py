@@ -97,23 +97,6 @@ def apply_custom_styling():
         background-color: var(--bg-secondary) !important;
     }
 
-    /* Page header — flat, no gradient */
-    .app-header {
-        padding: 1.75rem 2rem;
-        border-radius: 10px;
-        margin: 0 0 2rem 0;
-        border: 1px solid var(--border-subtle);
-        background-color: var(--bg-secondary);
-    }
-
-    .app-title {
-        font-size: 2rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin: 0;
-        letter-spacing: -0.5px;
-    }
-
     /* Headings */
     h1 {
         color: var(--text-primary);
@@ -134,21 +117,10 @@ def apply_custom_styling():
 
     h3 {
         color: var(--text-primary);
-        font-weight: 500;
+        font-weight: 600;
         font-size: 1.05rem;
-        margin: 1.25rem 0 0.5rem 0;
-    }
-
-    /* Help/Info Box — minimal */
-    .help-box {
-        background-color: var(--bg-surface);
-        border-left: 3px solid var(--accent-muted);
-        padding: 1rem 1.25rem;
-        border-radius: 0 6px 6px 0;
-        margin: 0 0 1.5rem 0;
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        line-height: 1.6;
+        margin: 1.5rem 0 0.75rem 0;
+        letter-spacing: -0.2px;
     }
 
     /* Stat Card — flat, left-aligned */
@@ -463,9 +435,6 @@ def apply_custom_styling():
             padding: 0.5rem 1rem;
             font-size: 0.85rem;
         }
-        .app-title {
-            font-size: 1.5rem;
-        }
         h1 {
             font-size: 1.35rem;
         }
@@ -548,6 +517,22 @@ def data_quality_report(df):
             "Percentage": (missing_data.values / len(df) * 100).round(2)
         })
         st.dataframe(missing_table[missing_table["Missing Count"] > 0], width="stretch")
+
+def page_header(kicker, title, subtitle=None):
+    """Unified page header — accent kicker, bold title, accent rule, optional subtitle."""
+    subtitle_html = ""
+    if subtitle:
+        subtitle_html = f"""
+        <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 1rem 0 0 0; line-height: 1.6; max-width: 620px;">{subtitle}</p>
+        """
+    st.markdown(f"""
+    <div style="margin-bottom: 2rem;">
+        <div style="color: var(--accent); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.6rem;">{kicker}</div>
+        <h1 style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0; letter-spacing: -0.5px; line-height: 1.15;">{title}</h1>
+        <div style="width: 48px; height: 3px; background: var(--accent); border-radius: 2px; margin-top: 1rem;"></div>
+        {subtitle_html}
+    </div>
+    """, unsafe_allow_html=True)
 
 def empty_state(title, message):
     """Display user-friendly empty state UI."""
@@ -1150,18 +1135,11 @@ def navigation_buttons():
 def landing_page():
     """Landing page with welcome message."""
     # Hero — value-proposition headline
-    st.markdown("""
-    <div style="margin-bottom: 2.5rem;">
-        <div style="color: var(--accent); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.9rem;">AI Data Science Assistant</div>
-        <h1 style="font-size: 2.5rem; font-weight: 700; color: var(--text-primary); margin: 0 0 1rem 0; letter-spacing: -0.5px; line-height: 1.15; max-width: 760px;">
-            From raw CSV to a trained model — without writing code.
-        </h1>
-        <div style="width: 48px; height: 3px; background: var(--accent); border-radius: 2px; margin-bottom: 1.25rem;"></div>
-        <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0; font-weight: 400; max-width: 620px;">
-            Upload a file, clean it, explore it, and compare models in a few clicks. No Python required.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    page_header(
+        "AI Data Science Assistant",
+        "From raw CSV to a trained model — without writing code.",
+        "Upload a file, clean it, explore it, and compare models in a few clicks. No Python required."
+    )
 
     if st.button("Start analyzing", key="hero_cta"):
         st.session_state.current_step = 1
@@ -1241,18 +1219,11 @@ def landing_page():
 
 def upload_and_schema():
     """Upload data and schema inspection page."""
-    st.markdown(f"""
-    <div class="app-header">
-        <div style="color: var(--text-tertiary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 1</div>
-        <h1 class="app-title">Upload Data</h1>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown(f"""
-    <div class="help-box">
-        {config.HELP_TEXTS[1]}
-    </div>
-    """, unsafe_allow_html=True)
+    page_header(
+        "Step 1 · Upload",
+        "Upload Data",
+        config.HELP_TEXTS[1]
+    )
     
     # Sample Datasets Section
     st.subheader("Sample datasets")
@@ -1346,18 +1317,11 @@ def upload_and_schema():
 
 def clean_data():
     """Data cleaning page."""
-    st.markdown(f"""
-    <div class="app-header">
-        <div style="color: var(--text-tertiary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 2</div>
-        <h1 class="app-title">Clean Data</h1>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown(f"""
-    <div class="help-box">
-        {config.HELP_TEXTS[2]}
-    </div>
-    """, unsafe_allow_html=True)
+    page_header(
+        "Step 2 · Clean",
+        "Clean Data",
+        config.HELP_TEXTS[2]
+    )
     
     if st.session_state.df is None:
         empty_state("No data available", "Please upload or load a dataset first.")
@@ -1631,18 +1595,11 @@ def clean_data():
 
 def visualize_data():
     """Data visualization page."""
-    st.markdown(f"""
-    <div class="app-header">
-        <div style="color: var(--text-tertiary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 3</div>
-        <h1 class="app-title">Visualize Data</h1>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown(f"""
-    <div class="help-box">
-        {config.HELP_TEXTS[3]}
-    </div>
-    """, unsafe_allow_html=True)
+    page_header(
+        "Step 3 · Visualize",
+        "Visualize Data",
+        config.HELP_TEXTS[3]
+    )
     
     if st.session_state.df is None:
         empty_state("No data available", "Please upload or load a dataset first.")
@@ -1845,18 +1802,11 @@ def visualize_data():
 
 def page_model_training():
     """Model training and comparison page."""
-    st.markdown(f"""
-    <div class="app-header">
-        <div style="color: var(--text-tertiary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 4</div>
-        <h1 class="app-title">Model Training</h1>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown(f"""
-    <div class="help-box">
-        {config.HELP_TEXTS[4]}
-    </div>
-    """, unsafe_allow_html=True)
+    page_header(
+        "Step 4 · Model",
+        "Model Training",
+        config.HELP_TEXTS[4]
+    )
     
     if st.session_state.df is None:
         empty_state("No data available", "Please upload or load a dataset first.")
