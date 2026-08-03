@@ -16,14 +16,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.datasets import load_iris, load_diabetes
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder, PolynomialFeatures
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.metrics import confusion_matrix, accuracy_score, r2_score, roc_curve, auc, roc_auc_score
+from sklearn.metrics import confusion_matrix, accuracy_score, r2_score, roc_curve, auc
 from scipy import stats
-import io
 import pickle
 from streamlit_option_menu import option_menu
 import config
@@ -42,8 +41,6 @@ if "pending_df" not in st.session_state:
     st.session_state.pending_df = None
 if "trained_models" not in st.session_state:
     st.session_state.trained_models = {}
-if "chat_messages" not in st.session_state:
-    st.session_state.chat_messages = []
 
 
 # Custom CSS Styling
@@ -487,10 +484,6 @@ def empty_state(title, message):
         <div class="empty-state-message">{message}</div>
     </div>
     """, unsafe_allow_html=True)
-
-def generate_ai_system_prompt(df=None):
-    """Placeholder for AI prompt generation."""
-    pass
 
 def generate_data_profile(df):
     """Generate comprehensive data profiling report."""
@@ -1090,114 +1083,116 @@ def landing_page():
     """, unsafe_allow_html=True)
     
     st.markdown("""
-    <div style="text-align: center; margin: 0 0 2.5rem 0;">
+    <div style="text-align: center; margin: -0.5rem 0 3rem 0;">
         <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0; font-weight: 400;">
-            Data cleaning, visualization, and model training in one place.
+            Go from raw CSV to trained model without writing code.
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Features Section
-    st.markdown("<h2>What it does</h2>", unsafe_allow_html=True)
-    
-    col1, col2 = st.columns(2)
-    
-    features_left = [
-        {
-            "title": "Upload & Profile",
-            "desc": "Load CSV files or built-in datasets. Instant profiling of columns, types, and missing values."
-        },
-        {
-            "title": "Clean & Prepare",
-            "desc": "Deduplication, imputation, encoding, scaling. Live preview before you commit."
-        },
-        {
-            "title": "Visualize",
-            "desc": "Correlation matrices with significance testing, distributions, and custom charts."
-        }
-    ]
-    
-    features_right = [
-        {
-            "title": "Train Models",
-            "desc": "Auto-detect classification vs regression. Compare Logistic Regression, Random Forest, Decision Tree."
-        },
-        {
-            "title": "Feature Engineering",
-            "desc": "Polynomial features, interaction terms, and binning to improve model performance."
-        },
-        {
-            "title": "Export",
-            "desc": "Download cleaned data, trained models, and HTML analysis reports."
-        }
-    ]
-    
-    with col1:
-        for feature in features_left:
-            st.markdown(f"""
-            <div style="background: var(--bg-surface); padding: 1.25rem 1.5rem; border-radius: 8px;
-                        margin-bottom: 0.75rem; border: 1px solid var(--border-subtle);">
-                <h3 style="color: var(--text-primary); font-weight: 500; margin: 0 0 0.35rem 0; font-size: 1rem;">
-                    {feature['title']}
-                </h3>
-                <p style="color: var(--text-secondary); margin: 0; font-size: 0.88rem; line-height: 1.55;">
-                    {feature['desc']}
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    with col2:
-        for feature in features_right:
-            st.markdown(f"""
-            <div style="background: var(--bg-surface); padding: 1.25rem 1.5rem; border-radius: 8px;
-                        margin-bottom: 0.75rem; border: 1px solid var(--border-subtle);">
-                <h3 style="color: var(--text-primary); font-weight: 500; margin: 0 0 0.35rem 0; font-size: 1rem;">
-                    {feature['title']}
-                </h3>
-                <p style="color: var(--text-secondary); margin: 0; font-size: 0.88rem; line-height: 1.55;">
-                    {feature['desc']}
-                </p>
-            </div>
-            """, unsafe_allow_html=True)
-    
-    # Quick Start
-    st.markdown("<h2>Quick start</h2>", unsafe_allow_html=True)
+    # Workflow — horizontal steps
+    st.markdown("<h2>Workflow</h2>", unsafe_allow_html=True)
     
     st.markdown("""
-    <div style="background: var(--bg-surface); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); line-height: 1.8; font-size: 0.92rem; color: var(--text-secondary);">
-        <strong style="color: var(--text-primary);">1.</strong> Go to <strong style="color: var(--text-primary);">Upload Data</strong> to load a CSV or sample dataset<br>
-        <strong style="color: var(--text-primary);">2.</strong> Review the data profile, stats, and missing value patterns<br>
-        <strong style="color: var(--text-primary);">3.</strong> Use <strong style="color: var(--text-primary);">Clean Data</strong> to deduplicate, impute, encode, or scale<br>
-        <strong style="color: var(--text-primary);">4.</strong> Explore distributions and correlations in <strong style="color: var(--text-primary);">Visualize</strong><br>
-        <strong style="color: var(--text-primary);">5.</strong> Train and compare models in <strong style="color: var(--text-primary);">Model Training</strong><br>
-        <strong style="color: var(--text-primary);">6.</strong> Export your results as CSV, pickle, or HTML report
+    <div style="display: flex; gap: 0; margin-bottom: 2.5rem;">
+        <div style="flex: 1; padding: 1rem 1.25rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px 0 0 8px; text-align: center;">
+            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 1</div>
+            <div style="color: var(--text-primary); font-weight: 500; font-size: 0.92rem;">Upload</div>
+            <div style="color: var(--text-tertiary); font-size: 0.8rem; margin-top: 0.25rem;">CSV or sample dataset</div>
+        </div>
+        <div style="flex: 1; padding: 1rem 1.25rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-left: none; text-align: center;">
+            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 2</div>
+            <div style="color: var(--text-primary); font-weight: 500; font-size: 0.92rem;">Clean</div>
+            <div style="color: var(--text-tertiary); font-size: 0.8rem; margin-top: 0.25rem;">Dedup, impute, scale</div>
+        </div>
+        <div style="flex: 1; padding: 1rem 1.25rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-left: none; text-align: center;">
+            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 3</div>
+            <div style="color: var(--text-primary); font-weight: 500; font-size: 0.92rem;">Visualize</div>
+            <div style="color: var(--text-tertiary); font-size: 0.8rem; margin-top: 0.25rem;">Correlations, charts</div>
+        </div>
+        <div style="flex: 1; padding: 1rem 1.25rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-left: none; text-align: center;">
+            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 4</div>
+            <div style="color: var(--text-primary); font-weight: 500; font-size: 0.92rem;">Train</div>
+            <div style="color: var(--text-tertiary); font-size: 0.8rem; margin-top: 0.25rem;">Compare models</div>
+        </div>
+        <div style="flex: 1; padding: 1rem 1.25rem; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-left: none; border-radius: 0 8px 8px 0; text-align: center;">
+            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 5</div>
+            <div style="color: var(--text-primary); font-weight: 500; font-size: 0.92rem;">Export</div>
+            <div style="color: var(--text-tertiary); font-size: 0.8rem; margin-top: 0.25rem;">Data, model, report</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
     
-    # Tips
-    st.markdown("<h2>Tips</h2>", unsafe_allow_html=True)
+    # Features — asymmetric 2-column with varied card sizes
+    st.markdown("<h2>Capabilities</h2>", unsafe_allow_html=True)
     
-    tips = [
-        "Start with a sample dataset (Iris or Diabetes) to explore without uploading your own data.",
-        "All cleaning operations show a live preview before you apply them.",
-        "Data persists across pages — navigate freely without losing your work.",
-        "Train multiple models at once to compare performance side by side.",
-        "Use feature engineering (polynomial, interactions, binning) before training to boost accuracy.",
-        "Correlation matrices include p-values — look for gold stars on significant pairs.",
-    ]
+    col_main, col_side = st.columns([3, 2])
     
-    for tip in tips:
-        st.markdown(f"""
-        <div style="background: var(--bg-surface); padding: 0.85rem 1.25rem; border-radius: 6px;
-                    border-left: 3px solid var(--accent-muted); margin-bottom: 0.5rem;">
-            <p style="color: var(--text-secondary); margin: 0; font-size: 0.88rem; line-height: 1.5;">{tip}</p>
+    with col_main:
+        st.markdown("""
+        <div style="background: var(--bg-surface); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); margin-bottom: 0.75rem;">
+            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Data profiling</div>
+            <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem; line-height: 1.6;">
+                Upload a CSV or pick a built-in dataset. Get instant column types, missing value patterns, summary statistics, and a correlation matrix with p-values.
+            </p>
         </div>
         """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style="background: var(--bg-surface); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); margin-bottom: 0.75rem;">
+            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Model training</div>
+            <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem; line-height: 1.6;">
+                Auto-detects classification vs regression. Trains Logistic Regression, Random Forest, and Decision Tree with cross-validation. Shows confusion matrices, ROC curves, and feature importance.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col_side:
+        st.markdown("""
+        <div style="background: var(--bg-surface); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); margin-bottom: 0.75rem;">
+            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Cleaning</div>
+            <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem; line-height: 1.6;">
+                Deduplication, missing value handling, categorical encoding, feature scaling, and outlier removal. Live preview before you commit.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style="background: var(--bg-surface); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); margin-bottom: 0.75rem;">
+            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Visualization</div>
+            <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem; line-height: 1.6;">
+                Histograms, boxplots, scatter plots, bar charts, KDE, violin plots, and pair plots. All styled with a consistent dark theme.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style="background: var(--bg-surface); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); margin-bottom: 0.75rem;">
+            <div style="color: var(--accent); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.5rem;">Export</div>
+            <p style="color: var(--text-secondary); margin: 0; font-size: 0.9rem; line-height: 1.6;">
+                Download cleaned data as CSV, trained models as pickle, and a full HTML analysis report.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Tips — condensed into a single box
+    st.markdown("<h2>Tips</h2>", unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="background: var(--bg-surface); padding: 1.5rem 1.75rem; border-radius: 8px; border: 1px solid var(--border-subtle); font-size: 0.88rem; color: var(--text-secondary); line-height: 1.8;">
+        <strong style="color: var(--text-primary);">Try the sample datasets first</strong> — Iris and Diabetes are built in, no upload needed.<br>
+        <strong style="color: var(--text-primary);">Live preview is your safety net</strong> — all cleaning ops show before/after before you commit.<br>
+        <strong style="color: var(--text-primary);">Data persists across pages</strong> — navigate freely, your work is preserved.<br>
+        <strong style="color: var(--text-primary);">Feature engineering matters</strong> — polynomial features and interactions can significantly boost model accuracy.<br>
+        <strong style="color: var(--text-primary);">Check p-values</strong> — the correlation matrix flags statistically significant relationships with gold stars.
+    </div>
+    """, unsafe_allow_html=True)
 
 def upload_and_schema():
     """Upload data and schema inspection page."""
-    st.markdown("""
+    st.markdown(f"""
     <div class="app-header">
+        <div style="color: var(--text-tertiary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 1</div>
         <h1 class="app-title">Upload Data</h1>
     </div>
     """, unsafe_allow_html=True)
@@ -1300,8 +1295,9 @@ def upload_and_schema():
 
 def clean_data():
     """Data cleaning page."""
-    st.markdown("""
+    st.markdown(f"""
     <div class="app-header">
+        <div style="color: var(--text-tertiary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 2</div>
         <h1 class="app-title">Clean Data</h1>
     </div>
     """, unsafe_allow_html=True)
@@ -1584,8 +1580,9 @@ def clean_data():
 
 def visualize_data():
     """Data visualization page."""
-    st.markdown("""
+    st.markdown(f"""
     <div class="app-header">
+        <div style="color: var(--text-tertiary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 3</div>
         <h1 class="app-title">Visualize Data</h1>
     </div>
     """, unsafe_allow_html=True)
@@ -1797,8 +1794,9 @@ def visualize_data():
 
 def page_model_training():
     """Model training and comparison page."""
-    st.markdown("""
+    st.markdown(f"""
     <div class="app-header">
+        <div style="color: var(--text-tertiary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 4</div>
         <h1 class="app-title">Model Training</h1>
     </div>
     """, unsafe_allow_html=True)
@@ -2111,15 +2109,17 @@ with st.sidebar:
             st.session_state.current_step = i
             break
     
-    st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
-    st.divider()
-    
+    # Step progress indicator
+    current = st.session_state.current_step
+    total = len(config.STEP_NAMES)
     st.markdown(f"""
-    <div class="help-box" style="margin-top: 0.75rem;">
-        <strong style="color: var(--text-tertiary); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em;">Current step</strong>
-        <div style="font-size: 0.9rem; color: var(--text-primary); margin-top: 0.35rem;">{config.STEP_NAMES[st.session_state.current_step]}</div>
-        <hr style="margin: 0.75rem 0; border: none; border-top: 1px solid var(--border);">
-        <span style="font-size: 0.8rem; line-height: 1.5; color: var(--text-secondary);">{config.HELP_TEXTS[st.session_state.current_step]}</span>
+    <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-surface); border-radius: 6px; border: 1px solid var(--border-subtle);">
+        <div style="display: flex; gap: 4px; margin-bottom: 0.5rem;">
+            {"".join(f'<div style="flex: 1; height: 3px; border-radius: 2px; background: {"var(--accent)" if i <= current else "var(--border)"};"></div>' for i in range(total))}
+        </div>
+        <div style="color: var(--text-tertiary); font-size: 0.75rem; font-weight: 500;">
+            Step {current + 1} of {total}
+        </div>
     </div>
     """, unsafe_allow_html=True)
     
