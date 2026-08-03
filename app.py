@@ -522,17 +522,16 @@ def page_header(kicker, title, subtitle=None):
     """Unified page header — accent kicker, bold title, accent rule, optional subtitle."""
     subtitle_html = ""
     if subtitle:
-        subtitle_html = f"""
-        <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 1rem 0 0 0; line-height: 1.6; max-width: 620px;">{subtitle}</p>
-        """
-    st.markdown(f"""
-    <div style="margin-bottom: 2rem;">
-        <div style="color: var(--accent); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.6rem;">{kicker}</div>
-        <h1 style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0; letter-spacing: -0.5px; line-height: 1.15;">{title}</h1>
-        <div style="width: 48px; height: 3px; background: var(--accent); border-radius: 2px; margin-top: 1rem;"></div>
-        {subtitle_html}
-    </div>
-    """, unsafe_allow_html=True)
+        subtitle_html = f'<p style="color: var(--text-secondary); font-size: 0.95rem; margin: 1rem 0 0 0; line-height: 1.6; max-width: 620px;">{subtitle}</p>'
+    html = (
+        '<div style="margin-bottom: 2rem;">'
+        f'<div style="color: var(--accent); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.6rem;">{kicker}</div>'
+        f'<h1 style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0; letter-spacing: -0.5px; line-height: 1.15;">{title}</h1>'
+        '<div style="width: 48px; height: 3px; background: var(--accent); border-radius: 2px; margin-top: 1rem;"></div>'
+        f'{subtitle_html}'
+        '</div>'
+    )
+    st.markdown(html, unsafe_allow_html=True)
 
 def empty_state(title, message):
     """Display user-friendly empty state UI."""
