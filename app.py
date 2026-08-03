@@ -477,7 +477,7 @@ def data_quality_report(df):
             "Missing Count": missing_data.values,
             "Percentage": (missing_data.values / len(df) * 100).round(2)
         })
-        st.dataframe(missing_table[missing_table["Missing Count"] > 0], use_container_width=True)
+        st.dataframe(missing_table[missing_table["Missing Count"] > 0], width="stretch")
 
 def empty_state(title, message):
     """Display user-friendly empty state UI."""
@@ -1213,7 +1213,7 @@ def upload_and_schema():
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("Load Iris dataset", use_container_width=True, key="iris_btn"):
+        if st.button("Load Iris dataset", width="stretch", key="iris_btn"):
             df = load_sample_dataset("iris")
             st.session_state.original_df = df.copy()
             st.session_state.df = df.copy()
@@ -1222,7 +1222,7 @@ def upload_and_schema():
             st.rerun()
     
     with col2:
-        if st.button("Load Diabetes dataset", use_container_width=True, key="diabetes_btn"):
+        if st.button("Load Diabetes dataset", width="stretch", key="diabetes_btn"):
             df = load_sample_dataset("diabetes")
             st.session_state.original_df = df.copy()
             st.session_state.df = df.copy()
@@ -1263,13 +1263,13 @@ def upload_and_schema():
             st.metric("Complete rows", f"{profile['Complete Rows']:,}")
         
         st.write("**Column profile:**")
-        st.dataframe(col_profile, use_container_width=True)
+        st.dataframe(col_profile, width="stretch")
         
         st.subheader("Data preview")
-        st.dataframe(st.session_state.df.head(config.DATA_PREVIEW_ROWS), use_container_width=True)
+        st.dataframe(st.session_state.df.head(config.DATA_PREVIEW_ROWS), width="stretch")
         
         st.subheader("Summary statistics")
-        st.dataframe(st.session_state.df.describe(), use_container_width=True)
+        st.dataframe(st.session_state.df.describe(), width="stretch")
         
         st.subheader("Schema")
         schema_info = pd.DataFrame({
@@ -1278,13 +1278,13 @@ def upload_and_schema():
             "Missing": st.session_state.df.isna().sum(),
             "Unique": st.session_state.df.nunique()
         })
-        st.dataframe(schema_info, use_container_width=True)
+        st.dataframe(schema_info, width="stretch")
         
         # Missing Value Heatmap
         st.subheader("Missing data pattern")
         if st.session_state.df.isna().sum().sum() > 0:
             missing_fig = get_missing_value_heatmap(st.session_state.df)
-            st.pyplot(missing_fig, use_container_width=True)
+            st.pyplot(missing_fig, width="stretch")
         else:
             st.info("No missing values detected.")
         
@@ -1292,7 +1292,7 @@ def upload_and_schema():
         st.subheader("Statistical summary")
         stat_summary = core.get_statistical_summary(st.session_state.df)
         if stat_summary is not None:
-            st.dataframe(stat_summary, use_container_width=True)
+            st.dataframe(stat_summary, width="stretch")
         else:
             st.info("No numeric columns found for statistical summary.")
     else:
@@ -1334,7 +1334,7 @@ def clean_data():
     
     # Original Data Preview
     with st.expander("Original data preview", expanded=False):
-        st.dataframe(st.session_state.original_df.head(config.DATA_PREVIEW_ROWS), use_container_width=True)
+        st.dataframe(st.session_state.original_df.head(config.DATA_PREVIEW_ROWS), width="stretch")
     
     st.subheader("Cleaning options")
     
@@ -1454,7 +1454,7 @@ def clean_data():
         preview_shape = preview_df.shape
         st.success(f"Original: {original_shape[0]}x{original_shape[1]} -> Cleaned: {preview_shape[0]}x{preview_shape[1]}")
         
-        st.dataframe(preview_df.head(config.DATA_PREVIEW_ROWS), use_container_width=True)
+        st.dataframe(preview_df.head(config.DATA_PREVIEW_ROWS), width="stretch")
     
     except Exception as e:
         st.error(f"Error during cleaning: {str(e)}")
@@ -1463,7 +1463,7 @@ def clean_data():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button("Apply", use_container_width=True, key="apply_clean"):
+        if st.button("Apply", width="stretch", key="apply_clean"):
             if st.session_state.pending_df is None:
                 st.error("No preview available. Adjust cleaning options first.")
             else:
@@ -1472,14 +1472,14 @@ def clean_data():
                 st.rerun()
     
     with col2:
-        if st.button("Revert", use_container_width=True, key="revert_clean"):
+        if st.button("Revert", width="stretch", key="revert_clean"):
             st.session_state.df = st.session_state.original_df.copy()
             st.session_state.pending_clean_options = {}
             st.info("Data reverted to original state.")
             st.rerun()
     
     with col3:
-        if st.button("Download", use_container_width=True, key="download_clean"):
+        if st.button("Download", width="stretch", key="download_clean"):
             if st.session_state.pending_df is None:
                 st.error("No preview available. Adjust cleaning options first.")
             else:
@@ -1489,7 +1489,7 @@ def clean_data():
                     data=csv,
                     file_name="cleaned_data.csv",
                     mime="text/csv",
-                    use_container_width=True
+                    width="stretch"
                 )
     
     # Suggested Workflow Banner
@@ -1528,7 +1528,7 @@ def clean_data():
                     key="poly_cols"
                 )
                 
-                if st.button("Generate polynomial features", use_container_width=True, key="gen_poly"):
+                if st.button("Generate polynomial features", width="stretch", key="gen_poly"):
                     df_engineered, new_features = engineer_features(
                         st.session_state.df, selected_numeric, "polynomial", degree
                     )
@@ -1544,7 +1544,7 @@ def clean_data():
                     key="interact_cols"
                 )
                 
-                if st.button("Generate interactions", use_container_width=True, key="gen_interact"):
+                if st.button("Generate interactions", width="stretch", key="gen_interact"):
                     if len(interaction_cols) >= 2:
                         df_engineered, new_features = engineer_features(
                             st.session_state.df, None, "interaction", interaction_cols=interaction_cols
@@ -1563,7 +1563,7 @@ def clean_data():
                     key="bin_cols"
                 )
                 
-                if st.button("Generate binned features", use_container_width=True, key="gen_bin"):
+                if st.button("Generate binned features", width="stretch", key="gen_bin"):
                     df_engineered, new_features = engineer_features(
                         st.session_state.df, binning_cols, "binning"
                     )
@@ -1610,7 +1610,7 @@ def visualize_data():
         
         if len(numeric_df.columns) >= 2:
             corr_fig, corr_df, pval_df = plot_correlation_with_significance(st.session_state.df, numeric_df.columns.tolist())
-            st.pyplot(corr_fig, use_container_width=True)
+            st.pyplot(corr_fig, width="stretch")
             
             st.markdown("**Legend:** Gold stars (*) = statistically significant correlations (p < 0.05)")
             st.info("Expand sections below to view detailed statistics and run hypothesis tests.")
@@ -1619,10 +1619,10 @@ def visualize_data():
                 col1, col2 = st.columns(2)
                 with col1:
                     st.write("**Correlation coefficients (r):**")
-                    st.dataframe(corr_df, use_container_width=True)
+                    st.dataframe(corr_df, width="stretch")
                 with col2:
                     st.write("**P-values:**")
-                    st.dataframe(pval_df, use_container_width=True)
+                    st.dataframe(pval_df, width="stretch")
             
             with st.expander("Hypothesis testing", expanded=False):
                 st.markdown("""
@@ -1640,11 +1640,11 @@ def visualize_data():
                 with test_col3:
                     test_type = st.selectbox("Test type", ["pearson", "spearman", "ttest"], key="test_type")
                 
-                if st.button("Run test", use_container_width=True, key="run_test"):
+                if st.button("Run test", width="stretch", key="run_test"):
                     if var1 != var2:
                         with st.spinner("Running statistical test..."):
                             result = core.perform_hypothesis_test(st.session_state.df, var1, var2, test_type)
-                        st.dataframe(result.to_frame().T, use_container_width=True)
+                        st.dataframe(result.to_frame().T, width="stretch")
                         
                         if result.get('P-value', 1) < 0.05:
                             st.success("Statistically significant relationship found (p < 0.05). This means the relationship is unlikely due to random chance.")
@@ -1716,7 +1716,7 @@ def visualize_data():
                     spine.set_linewidth(0.5)
                 
                 plt.tight_layout()
-                st.pyplot(fig, use_container_width=True)
+                st.pyplot(fig, width="stretch")
             
             except Exception as e:
                 st.error(f"Error creating chart: {str(e)}")
@@ -1774,7 +1774,7 @@ def visualize_data():
                     spine.set_linewidth(0.5)
                 
                 plt.tight_layout()
-                st.pyplot(fig, use_container_width=True)
+                st.pyplot(fig, width="stretch")
         else:
             st.info("Distribution analysis requires at least one numeric column.")
     
@@ -1786,11 +1786,11 @@ def visualize_data():
         
         if len(numeric_cols) >= 2:
             if st.button("Generate pair plot", help="Shows pairwise relationships between numeric features", 
-                        use_container_width=True, key="pair_plot_btn"):
+                        width="stretch", key="pair_plot_btn"):
                 with st.spinner("Generating pair plot..."):
                     pair_fig = plot_pair_plot(st.session_state.df, numeric_cols)
                     if pair_fig:
-                        st.pyplot(pair_fig, use_container_width=True)
+                        st.pyplot(pair_fig, width="stretch")
                         st.caption("Pair plot showing relationships between all numeric features (diagonal: histograms, off-diagonal: scatter plots)")
         else:
             st.info("Pair plots require at least 2 numeric columns.")
@@ -1857,7 +1857,7 @@ def page_model_training():
         st.warning("Please select at least one model.")
         return
     
-    if st.button("Train models", use_container_width=True, key="train_btn"):
+    if st.button("Train models", width="stretch", key="train_btn"):
         X = st.session_state.df[selected_features]
         y = st.session_state.df[target_column]
         
@@ -1945,7 +1945,7 @@ def page_model_training():
         st.session_state.trained_models = model_instances
         
         results_df = pd.DataFrame(results)
-        st.dataframe(results_df, use_container_width=True)
+        st.dataframe(results_df, width="stretch")
         
         best_idx = results_df["Test Metric"].idxmax()
         best_model = results_df.loc[best_idx, "Model"]
@@ -1988,7 +1988,7 @@ def page_model_training():
                 if cbar:
                     cbar.set_label('Count', color='#dfe2e8')
                     cbar.ax.tick_params(colors='#dfe2e8')
-                st.pyplot(fig, use_container_width=True)
+                st.pyplot(fig, width="stretch")
         
         with col2:
             if mode == "Regression":
@@ -2006,13 +2006,13 @@ def page_model_training():
                 ax.tick_params(colors='#dfe2e8')
                 for spine in ax.spines.values():
                     spine.set_color('#282c34')
-                st.pyplot(fig, use_container_width=True)
+                st.pyplot(fig, width="stretch")
             elif mode == "Classification":
                 best_model_data = st.session_state.trained_models[best_model]
                 if best_model_data.get("is_binary") and best_model_data["y_pred_proba"] is not None:
                     st.write("**ROC curve (best model)**")
                     roc_fig, roc_auc = plot_roc_curve(best_model_data["y_test"], best_model_data["y_pred_proba"], best_model)
-                    st.pyplot(roc_fig, use_container_width=True)
+                    st.pyplot(roc_fig, width="stretch")
                 else:
                     st.info("ROC curve is available only for binary classification with probability outputs.")
         
@@ -2022,7 +2022,7 @@ def page_model_training():
             "Actual": best_model_data["y_test"].values[:10],
             "Predicted": best_model_data["y_pred"][:10]
         })
-        st.dataframe(sample_predictions, use_container_width=True)
+        st.dataframe(sample_predictions, width="stretch")
         
         engineered_cols = [col for col in st.session_state.df.columns 
                           if any(x in col for x in ['_poly', '_x_', '_binned'])]
@@ -2043,7 +2043,7 @@ def page_model_training():
             data=html_report,
             file_name=f"analysis_report_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.html",
             mime="text/html",
-            use_container_width=True
+            width="stretch"
         )
         
         st.subheader("Export model")
@@ -2053,7 +2053,7 @@ def page_model_training():
             data=model_bytes,
             file_name=f"{best_model.lower().replace(' ', '_')}.pkl",
             mime="application/octet-stream",
-            use_container_width=True
+            width="stretch"
         )
 
 # ============================================================================
