@@ -13,15 +13,16 @@ from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 
 MODELS_WITH_SCALER = {
     "Logistic Regression", "Linear Regression", "Ridge", "Lasso",
-    "SVM", "SVR", "KNN", "KNN Regressor",
+    "SVM", "SVR", "KNN", "K-Nearest Neighbors", "KNN Regressor",
 }
 
 MODEL_MAP = {
-    "Logistic Regression": LogisticRegression,
+    "Logistic Regression": lambda: LogisticRegression(max_iter=1000),
     "Random Forest": RandomForestClassifier,
     "Decision Tree": DecisionTreeClassifier,
     "SVM": LinearSVC,
     "KNN": KNeighborsClassifier,
+    "K-Nearest Neighbors": KNeighborsClassifier,
     "Gradient Boosting": GradientBoostingClassifier,
     "Linear Regression": LinearRegression,
     "Ridge": Ridge,
@@ -36,8 +37,7 @@ MODEL_MAP = {
 PARAM_GRIDS = {
     "Logistic Regression": {
         "model__C": [0.001, 0.01, 0.1, 1.0, 10.0, 100.0],
-        "model__penalty": ["l1", "l2"],
-        "model__solver": ["liblinear"],
+        "model__penalty": ["l2"],
     },
     "Random Forest": {
         "model__n_estimators": [50, 100, 200, 300],
@@ -52,6 +52,10 @@ PARAM_GRIDS = {
         "model__kernel": ["linear", "rbf"],
     },
     "KNN": {
+        "model__n_neighbors": [3, 5, 7, 10, 15, 20],
+        "model__weights": ["uniform", "distance"],
+    },
+    "K-Nearest Neighbors": {
         "model__n_neighbors": [3, 5, 7, 10, 15, 20],
         "model__weights": ["uniform", "distance"],
     },
@@ -136,19 +140,27 @@ def compute_learning_curve(
     y: pd.Series,
     cv: int = 5,
     train_sizes: np.ndarray = None,
+    scoring: str = None,
 ) -> dict:
     if train_sizes is None:
         train_sizes = np.linspace(0.1, 1.0, 10)
 
+    if scoring is None:
+        scoring = "accuracy"
+
     train_sizes_abs, train_scores, val_scores = learning_curve(
         estimator, X, y, cv=cv, train_sizes=train_sizes,
-        scoring="accuracy", n_jobs=-1,
+        scoring=scoring, n_jobs=-1,
     )
 
     return {
         "train_sizes": train_sizes_abs.tolist(),
         "train_scores": train_scores.tolist(),
         "val_scores": val_scores.tolist(),
+        "train_mean": np.mean(train_scores, axis=1).tolist(),
+        "train_std": np.std(train_scores, axis=1).tolist(),
+        "cv_mean": np.mean(val_scores, axis=1).tolist(),
+        "cv_std": np.std(val_scores, axis=1).tolist(),
     }
 
 
@@ -159,16 +171,20 @@ def compute_validation_curve(
     param_name: str,
     param_range: np.ndarray,
     cv: int = 5,
+    scoring: str = None,
 ) -> dict:
+    if scoring is None:
+        scoring = "accuracy"
+
     train_scores, val_scores = validation_curve(
         estimator, X, y,
         param_name=param_name,
         param_range=param_range,
-        cv=cv, scoring="accuracy", n_jobs=-1,
+        cv=cv, scoring=scoring, n_jobs=-1,
     )
 
     return {
-        "param_range": param_range.tolist(),
+        "param_range": list(param_range),
         "train_scores": train_scores.tolist(),
         "val_scores": val_scores.tolist(),
     }
