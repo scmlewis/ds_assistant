@@ -285,3 +285,36 @@ def test_explain_prediction_nonlinear_model():
     result = modeling.explain_prediction(pipe, X, y, row_idx=0, feature_names=["a", "b"])
     assert isinstance(result, pd.DataFrame)
     assert len(result) == 2
+
+
+def test_diagnose_model_good_fit():
+    result = modeling.diagnose_model(
+        train_metric=0.95, test_metric=0.92, cv_mean=0.91, cv_std=0.02
+    )
+    assert result["verdict"] == "Good fit"
+    assert "generalizes" in result["explanation"].lower()
+
+
+def test_diagnose_model_overfitting():
+    result = modeling.diagnose_model(
+        train_metric=0.98, test_metric=0.75, cv_mean=0.76, cv_std=0.08
+    )
+    assert result["verdict"] == "Possible overfitting"
+    assert "training" in result["explanation"].lower() or "train" in result["explanation"].lower()
+
+
+def test_diagnose_model_underfitting():
+    result = modeling.diagnose_model(
+        train_metric=0.55, test_metric=0.53, cv_mean=0.52, cv_std=0.03
+    )
+    assert result["verdict"] == "Underfitting"
+    assert "simple" in result["explanation"].lower() or "pattern" in result["explanation"].lower()
+
+
+def test_diagnose_model_has_all_keys():
+    result = modeling.diagnose_model(
+        train_metric=0.95, test_metric=0.92, cv_mean=0.91, cv_std=0.02
+    )
+    assert "verdict" in result
+    assert "explanation" in result
+    assert "recommendation" in result

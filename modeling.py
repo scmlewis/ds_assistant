@@ -243,6 +243,64 @@ def partial_dependence_data(
         }
 
 
+def diagnose_model(
+    train_metric: float,
+    test_metric: float,
+    cv_mean: float,
+    cv_std: float,
+) -> dict:
+    gap = train_metric - test_metric
+
+    if cv_std > 0.1:
+        verdict = "High variance"
+        explanation = (
+            "Cross-validation scores vary significantly across folds, "
+            "indicating the model's performance is unstable."
+        )
+        recommendation = (
+            "Try collecting more training data, reducing model complexity, "
+            "or increasing regularization to improve consistency."
+        )
+    elif train_metric < 0.6 and test_metric < 0.6:
+        verdict = "Underfitting"
+        explanation = (
+            "Both training and test scores are low, suggesting the model "
+            "cannot capture the underlying pattern in the data."
+        )
+        recommendation = (
+            "Try a more complex model, add more features, reduce "
+            "regularization, or engineer new features."
+        )
+    elif gap > 0.15:
+        verdict = "Possible overfitting"
+        explanation = (
+            f"Training score ({train_metric:.3f}) is much higher than "
+            f"test score ({test_metric:.3f}), indicating the model may be "
+            "memorizing training data rather than generalizing."
+        )
+        recommendation = (
+            "Try increasing regularization, reducing model complexity, "
+            "removing noisy features, or adding more training data."
+        )
+    else:
+        verdict = "Good fit"
+        explanation = (
+            f"The model generalizes well. Training score ({train_metric:.3f}) "
+            f"and test score ({test_metric:.3f}) are close, and cross-validation "
+            f"mean ({cv_mean:.3f}) is stable (std={cv_std:.3f})."
+        )
+        recommendation = (
+            "Consider fine-tuning hyperparameters or trying feature "
+            "engineering for marginal improvements."
+        )
+
+    return {
+        "verdict": verdict,
+        "explanation": explanation,
+        "recommendation": recommendation,
+    }
+
+
 def explain_prediction(
     model,
     X_test: pd.DataFrame,
