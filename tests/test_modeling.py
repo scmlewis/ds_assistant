@@ -195,3 +195,46 @@ def test_compute_validation_curve_returns_expected_keys():
     assert "train_scores" in result
     assert "val_scores" in result
     assert len(result["param_range"]) == 4
+
+
+def test_permutation_feature_importance_returns_dataframe():
+    X = pd.DataFrame({"a": range(100), "b": range(100)})
+    y = pd.Series([0] * 50 + [1] * 50)
+    pipe = modeling.build_pipeline("Logistic Regression")
+    pipe.fit(X, y)
+    result = modeling.permutation_feature_importance(pipe, X, y, n_repeats=5)
+    assert isinstance(result, pd.DataFrame)
+    assert "feature" in result.columns
+    assert "importance_mean" in result.columns
+    assert "importance_std" in result.columns
+    assert len(result) == 2
+
+
+def test_permutation_feature_importance_sorted_by_importance():
+    X = pd.DataFrame({"a": [1, 2, 3, 4, 5] * 20, "b": [1, 1, 1, 1, 1] * 20})
+    y = pd.Series([0, 0, 0, 0, 0, 1, 1, 1, 1, 1] * 10)
+    pipe = modeling.build_pipeline("Logistic Regression")
+    pipe.fit(X, y)
+    result = modeling.permutation_feature_importance(pipe, X, y, n_repeats=5)
+    assert result.iloc[0]["importance_mean"] >= result.iloc[-1]["importance_mean"]
+
+
+def test_get_model_coefficients_linear_model():
+    X = pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0, 5.0], "b": [5.0, 4.0, 3.0, 2.0, 1.0]})
+    y = pd.Series([0, 0, 1, 1, 1])
+    pipe = modeling.build_pipeline("Logistic Regression")
+    pipe.fit(X, y)
+    result = modeling.get_model_coefficients(pipe, ["a", "b"])
+    assert isinstance(result, pd.DataFrame)
+    assert "feature" in result.columns
+    assert "coefficient" in result.columns
+    assert len(result) == 2
+
+
+def test_get_model_coefficients_nonlinear_returns_none():
+    X = pd.DataFrame({"a": range(100), "b": range(100)})
+    y = pd.Series([0] * 50 + [1] * 50)
+    pipe = modeling.build_pipeline("Random Forest")
+    pipe.fit(X, y)
+    result = modeling.get_model_coefficients(pipe, ["a", "b"])
+    assert result is None

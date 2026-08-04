@@ -103,6 +103,7 @@ def build_pipeline(model_name: str, scaler: str = "standard") -> Pipeline:
 
 
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, learning_curve, validation_curve
+from sklearn.inspection import permutation_importance as sklearn_permutation_importance
 
 
 def run_grid_search(
@@ -170,6 +171,47 @@ def compute_validation_curve(
         "train_scores": train_scores.tolist(),
         "val_scores": val_scores.tolist(),
     }
+
+
+def permutation_feature_importance(
+    model,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+    n_repeats: int = 10,
+) -> pd.DataFrame:
+    result = sklearn_permutation_importance(
+        model, X_test, y_test, n_repeats=n_repeats, random_state=42, n_jobs=-1
+    )
+
+    df = pd.DataFrame({
+        "feature": X_test.columns.tolist(),
+        "importance_mean": result.importances_mean,
+        "importance_std": result.importances_std,
+    })
+
+    return df.sort_values("importance_mean", ascending=False).reset_index(drop=True)
+
+
+def get_model_coefficients(model, feature_names: list) -> pd.DataFrame | None:
+    try:
+        named_steps = dict(model.steps)
+    except AttributeError:
+        return None
+
+    estimator = named_steps.get("model", model)
+    if not hasattr(estimator, "coef_"):
+        return None
+
+    coefs = estimator.coef_
+    if coefs.ndim > 1:
+        coefs = coefs[0]
+
+    df = pd.DataFrame({
+        "feature": feature_names[: len(coefs)],
+        "coefficient": coefs,
+    })
+
+    return df.sort_values("coefficient", key=abs, ascending=False).reset_index(drop=True)
 
 
 def get_param_grid(model_name: str) -> dict:
