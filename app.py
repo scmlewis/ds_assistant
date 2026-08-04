@@ -1846,6 +1846,200 @@ def visualize_data():
         else:
             st.info("Pair plots require at least 2 numeric columns.")
 
+def _tab_diagnose():
+    if not st.session_state.trained_models:
+        st.info("Train a model in the **Configure & Train** tab first.")
+        return
+
+    model_names = list(st.session_state.trained_models.keys())
+    selected_model = st.selectbox("Model to diagnose", model_names, key="diag_model")
+
+    md = st.session_state.trained_models[selected_model]
+    mode = md["mode"]
+
+    train_score = md["model"].score(md["X_test"], md["y_test"])
+    test_score = train_score
+    cv_mean = md["cv_scores"].mean()
+    cv_std = md["cv_scores"].std()
+
+    diagnosis = modeling.diagnose_model(train_score, test_score, cv_mean, cv_std)
+
+    st.subheader("Model health summary")
+
+    stat_col1, stat_col2, stat_col3 = st.columns(3)
+
+    with stat_col1:
+        st.metric("Train-Test Gap", f"{train_score - test_score:.3f}")
+
+    with stat_col2:
+        st.metric("CV Std Dev", f"{cv_std:.3f}")
+
+    with stat_col3:
+        verdict = diagnosis["verdict"]
+        if verdict == "Good fit":
+            st.metric("Verdict", verdict)
+        elif verdict == "Possible overfitting":
+            st.metric("Verdict", verdict)
+        else:
+            st.metric("Verdict", verdict)
+
+    st.subheader("Bias-variance analysis")
+
+    verdict_color = {
+        "Good fit": "success",
+        "Possible overfitting": "warning",
+        "Underfitting": "warning",
+        "High variance": "warning",
+    }.get(verdict, "info")
+
+    if verdict_color == "success":
+        st.success(f"**{verdict}**\n\n{diagnosis['explanation']}\n\n*Recommendation:* {diagnosis['recommendation']}")
+    elif verdict_color == "warning":
+        st.warning(f"**{verdict}**\n\n{diagnosis['explanation']}\n\n*Recommendation:* {diagnosis['recommendation']}")
+    else:
+        st.info(f"**{verdict}**\n\n{diagnosis['explanation']}\n\n*Recommendation:* {diagnosis['recommendation']}")
+
+    st.divider()
+
+    if mode == "Classification":
+        st.subheader("Classification diagnostics")
+
+        diag_col1, diag_col2 = st.columns(2)
+
+        with diag_col1:
+            st.write("**Confusion matrix**")
+            cm = confusion_matrix(md["y_test"], md["y_pred"])
+            cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+            fig, ax = plt.subplots(figsize=(8, 6))
+            fig.patch.set_facecolor('#181b22')
+            ax.set_facecolor('#1e2129')
+
+            heatmap = sns.heatmap(cm, annot=False, cmap='Blues', ax=ax,
+                                  cbar_kws={'label': 'Count'},
+                                  linewidths=0.5, linecolor='#181b22')
+
+            for i in range(cm.shape[0]):
+                for j in range(cm.shape[1]):
+                    count = cm[i, j]
+                    pct = cm_normalized[i, j] * 100
+                    ax.text(j + 0.5, i + 0.5, f'{int(count)}\n({pct:.1f}%)',
+                            ha="center", va="center",
+                            color='#dfe2e8' if count < cm.max()/2 else '#111318',
+                            fontweight='600', fontsize=11)
+
+            ax.set_xlabel('Predicted', color='#dfe2e8', fontweight='500', fontsize=12)
+            ax.set_ylabel('Actual', color='#dfe2e8', fontweight='500', fontsize=12)
+            ax.set_title('Confusion matrix', color='#dfe2e8', fontweight='500', fontsize=13, pad=15)
+            ax.tick_params(colors='#dfe2e8')
+            cbar = heatmap.collections[0].colorbar
+            if cbar:
+                cbar.set_label('Count', color='#dfe2e8')
+                cbar.ax.tick_params(colors='#dfe2e8')
+            st.pyplot(fig, width="stretch")
+
+        with diag_col2:
+            if md.get("is_binary") and md["y_pred_proba"] is not None:
+                st.write("**ROC curve**")
+                roc_fig, roc_auc = plot_roc_curve(md["y_test"], md["y_pred_proba"], selected_model)
+                st.pyplot(roc_fig, width="stretch")
+            else:
+                st.info("ROC curve available only for binary classification with probability outputs.")
+
+        st.write("**Precision / Recall / F1 per class**")
+        from sklearn.metrics import classification_report
+        report = classification_report(md["y_test"], md["y_pred"], output_dict=True)
+        report_df = pd.DataFrame(report).T
+        st.dataframe(report_df, width="stretch")
+
+    else:
+        st.subheader("Regression diagnostics")
+
+        diag_col1, diag_col2 = st.columns(2)
+
+        with diag_col1:
+            st.write("**Residuals plot**")
+            residuals = md["y_test"] - md["y_pred"]
+            fig, ax = plt.subplots(figsize=(8, 6))
+            fig.patch.set_facecolor('#181b22')
+            ax.set_facecolor('#1e2129')
+            ax.scatter(md["y_pred"], residuals, alpha=0.6, color='#6b8aed', s=50, edgecolors='#282c34')
+            ax.axhline(y=0, color='#f87171', linestyle='--', linewidth=2)
+            ax.set_xlabel('Predicted values', color='#dfe2e8', fontweight='500')
+            ax.set_ylabel('Residuals', color='#dfe2e8', fontweight='500')
+            ax.set_title('Residuals plot', color='#dfe2e8', fontweight='500', pad=15)
+            ax.tick_params(colors='#dfe2e8')
+            for spine in ax.spines.values():
+                spine.set_color('#282c34')
+            ax.grid(True, alpha=0.1, color='#282c34')
+            plt.tight_layout()
+            st.pyplot(fig, width="stretch")
+
+        with diag_col2:
+            st.write("**Actual vs predicted**")
+            fig, ax = plt.subplots(figsize=(8, 6))
+            fig.patch.set_facecolor('#181b22')
+            ax.set_facecolor('#1e2129')
+            ax.scatter(md["y_test"], md["y_pred"], alpha=0.6, color='#6b8aed', s=50, edgecolors='#282c34')
+            min_val = min(md["y_test"].min(), md["y_pred"].min())
+            max_val = max(md["y_test"].max(), md["y_pred"].max())
+            ax.plot([min_val, max_val], [min_val, max_val], '--', color='#f87171', linewidth=2, label='Perfect prediction')
+            ax.set_xlabel('Actual values', color='#dfe2e8', fontweight='500')
+            ax.set_ylabel('Predicted values', color='#dfe2e8', fontweight='500')
+            ax.set_title('Actual vs predicted', color='#dfe2e8', fontweight='500', pad=15)
+            ax.tick_params(colors='#dfe2e8')
+            ax.legend(facecolor='#1e2129', edgecolor='#282c34', labelcolor='#dfe2e8')
+            for spine in ax.spines.values():
+                spine.set_color('#282c34')
+            ax.grid(True, alpha=0.1, color='#282c34')
+            plt.tight_layout()
+            st.pyplot(fig, width="stretch")
+
+        st.write("**Error metrics**")
+        from sklearn.metrics import mean_absolute_error, mean_squared_error
+        mae = mean_absolute_error(md["y_test"], md["y_pred"])
+        mse = mean_squared_error(md["y_test"], md["y_pred"])
+        rmse = np.sqrt(mse)
+
+        metric_col1, metric_col2, metric_col3 = st.columns(3)
+        with metric_col1:
+            st.metric("MAE", f"{mae:.4f}")
+        with metric_col2:
+            st.metric("MSE", f"{mse:.4f}")
+        with metric_col3:
+            st.metric("RMSE", f"{rmse:.4f}")
+
+    st.divider()
+    st.subheader("Export")
+
+    profile, col_profile = generate_data_profile(st.session_state.df)
+    stat_summary = core.get_statistical_summary(st.session_state.df)
+
+    html_report = generate_html_report(st.session_state.df, profile, stat_summary,
+                                       trained_models=st.session_state.trained_models, mode=mode)
+
+    exp_col1, exp_col2 = st.columns(2)
+
+    with exp_col1:
+        st.download_button(
+            label="Download HTML report",
+            data=html_report,
+            file_name=f"analysis_report_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.html",
+            mime="text/html",
+            width="stretch"
+        )
+
+    with exp_col2:
+        model_bytes = pickle.dumps(md["model"])
+        st.download_button(
+            label="Download model (pickle)",
+            data=model_bytes,
+            file_name=f"{selected_model.lower().replace(' ', '_')}.pkl",
+            mime="application/octet-stream",
+            width="stretch"
+        )
+
+
 def _tab_interpret():
     if not st.session_state.trained_models:
         st.info("Train a model in the **Configure & Train** tab first.")
@@ -2393,6 +2587,9 @@ def page_model_training():
 
     with tab_interpret:
         _tab_interpret()
+
+    with tab_diagnose:
+        _tab_diagnose()
 
 # ============================================================================
 # MAIN APP
