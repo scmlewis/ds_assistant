@@ -1,15 +1,68 @@
-# 🤖 AI Data Science Assistant
+# AI Data Science Assistant
 
-An interactive Streamlit application for complete data science workflows - from data exploration and cleaning to machine learning model training and comparison.
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://streamlit.io)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3+-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)](https://scikit-learn.org)
+[![Pandas](https://img.shields.io/badge/Pandas-2.3+-150458?style=for-the-badge&logo=pandas&logoColor=white)](https://pandas.pydata.org)
+[![NumPy](https://img.shields.io/badge/NumPy-1.23+-010187?style=for-the-badge&logo=numpy&logoColor=white)](https://numpy.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-## ✨ Features
+An end-to-end data science workflow tool built with Streamlit. Upload a dataset, profile it, clean it, explore it visually, and train machine learning models -- all through a point-and-click interface with no code required.
 
-- **📤 Upload & Explore** - Load CSV files or use built-in datasets (Iris Classification, Diabetes Regression)
-- **🧹 Smart Data Cleaning** - Remove duplicates, handle missing values, standardize columns, scale features, remove outliers
-- **📊 Rich Visualizations** - Correlation heatmaps, histograms, scatter plots, boxplots, bar/pie charts with significance testing
-- **🤖 Model Training** - Train and compare 3 classification and 3 regression models with detailed diagnostics
-- **📋 Diagnostics** - Confusion matrices, residual plots, ROC curves for deep model analysis
-- **💾 Export Results** - Download cleaned datasets, trained models as pickle files, and HTML reports
+---
+
+## Features
+
+### Data Upload & Profiling
+- CSV file upload or built-in sample datasets (Iris for classification, Diabetes for regression)
+- Data quality report with row/column counts, duplicates, and missing data percentage
+- Memory usage analysis, completeness metrics, and column-level statistics
+- Schema viewer and summary statistics with a missing data heatmap
+
+### Data Cleaning
+- Standardize column names, remove duplicates, drop or fill missing values
+- Outlier removal using the IQR method
+- Label encoding for categorical columns and feature scaling (StandardScaler or MinMaxScaler)
+- Live before/after preview with Apply, Revert, and Download controls
+
+### Feature Engineering
+- Polynomial feature generation
+- Interaction terms between features
+- Binning for continuous variables
+
+### Visualization
+- **Correlations**: Heatmap with Pearson p-values and hypothesis testing (Pearson, Spearman, T-test)
+- **Charts**: Histogram, Boxplot, Scatter, Bar, Column, and Pie charts
+- **Distributions**: Histogram with KDE, KDE-only, and Violin plots
+- **Pair Plot**: Scatter/histogram matrix across all numeric features
+
+### ML Lab
+
+The ML Lab provides four sub-tabs for a complete modeling workflow:
+
+**Configure & Train** -- Select target column and features, auto-detects classification vs regression, trains up to 6 models per mode with cross-validation scores, confusion matrices, ROC curves, residual plots, and sample predictions.
+
+**Tune** -- Hyperparameter optimization via Grid Search or Randomized Search with configurable cross-validation folds, learning curves, and validation curves.
+
+**Interpret** -- Permutation importance, model coefficient extraction, partial dependence plots (1D and 2D), and single-prediction explanation with a contribution waterfall.
+
+**Diagnose** -- Bias-variance analysis with fit classification (Good fit / Overfitting / Underfitting / High variance), train-test gap, confusion matrix, ROC curve, classification report, and regression error metrics (MAE, MSE, RSE).
+
+### Export
+- Cleaned datasets as CSV
+- Trained models as pickle files
+- Full HTML reports with metrics, plots, and diagnostics
+
+---
+
+## Supported Models
+
+| Type | Models |
+|------|--------|
+| **Classification** | Logistic Regression, Random Forest, Decision Tree, SVM, K-Nearest Neighbors, Gradient Boosting |
+| **Regression** | Linear Regression, Random Forest, Decision Tree, SVR, K-Nearest Neighbors, Gradient Boosting |
+
+---
 
 ## Installation
 
@@ -19,18 +72,14 @@ An interactive Streamlit application for complete data science workflows - from 
 
 ### Setup
 
-1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd ds_assistant
-```
-
-2. Install dependencies:
-```bash
 pip install -r requirements.txt
 ```
 
 Or with conda:
+
 ```bash
 conda create -n ds_assistant python=3.12
 conda activate ds_assistant
@@ -39,129 +88,65 @@ pip install -r requirements.txt
 
 ## Usage
 
-Run the Streamlit app:
 ```bash
 streamlit run app.py
 ```
 
-The app will open in your default browser at `http://localhost:8501`
+The app opens at `http://localhost:8501`.
+
+---
 
 ## Workflow
 
-1. **Welcome** - Get started with the application
-2. **Upload Data** - Load a CSV file or use sample datasets
-3. **Clean Data** - Apply cleaning operations with live preview
-4. **Visualize** - Create charts and explore correlations
-5. **Model** - Train ML models and compare performance
+1. **Upload Data** -- Load a CSV or select a sample dataset
+2. **Clean Data** -- Apply cleaning operations with a live preview
+3. **Visualize** -- Create charts, explore correlations, and run hypothesis tests
+4. **ML Lab** -- Configure, train, tune, interpret, and diagnose models
 
-## Supported Models
+---
 
-### Classification
-- Logistic Regression
-- Random Forest Classifier
-- Decision Tree Classifier
+## Tech Stack
 
-### Regression
-- Linear Regression
-- Random Forest Regressor
-- Decision Tree Regressor
+| Category | Technology |
+|----------|------------|
+| Framework | Streamlit |
+| Language | Python 3.12 |
+| Data Processing | Pandas, NumPy |
+| Machine Learning | scikit-learn |
+| Statistics | SciPy |
+| Visualization | Matplotlib, Seaborn |
+| UI Components | streamlit-option-menu |
+| Font | Google Fonts (Outfit) |
+
+---
 
 ## Project Structure
 
 ```
 ds_assistant/
-├── app.py                      # Main Streamlit application
-├── config.py                   # Configuration and constants
-├── requirements.txt            # Python dependencies
-├── .gitignore                  # Git ignore rules
-├── .env                        # API keys (not committed)
-├── README.md                   # This file
-└── APP_SPECIFICATION.md        # Complete technical specification
+  app.py              # Main Streamlit application
+  config.py           # Configuration and constants
+  core.py             # Data validation, correlation, and hypothesis tests
+  modeling.py         # ML pipelines, tuning, interpretation, and diagnosis
+  requirements.txt    # Python dependencies
+  .streamlit/         # Streamlit server and theme configuration
 ```
+
+---
 
 ## Configuration
 
 All configuration is managed in `config.py`:
 
-- **Workflow Steps** - Define navigation menu items
-- **Model Definitions** - Classification and regression models
-- **Data Processing** - IQR multiplier, train/test split, cross-validation folds
-- **UI Settings** - Colors, fonts, preview rows, chart sizes
-- **Sample Datasets** - Available built-in datasets
-
-## Data Cleaning Options
-
-- **Standardize column names** - Convert to lowercase with underscores
-- **Remove duplicates** - Drop exact duplicate rows
-- **Drop missing rows** - Remove rows with any NaN values
-- **Fill missing values** - Impute NaN with specified value
-- **Remove outliers** - IQR method (1.5 × IQR by default)
-- **Encode categorical** - Label encode object columns
-- **Scale features** - Normalize using StandardScaler or MinMaxScaler
-
-## Visualization Types
-
-- **Correlation Matrix** - Heatmap of feature correlations
-- **Histogram** - Distribution of single numeric column
-- **Scatter Plot** - Relationship between two numeric columns
-- **Boxplot** - Distribution across multiple columns
-- **Bar Chart** - Counts by category (vertical)
-- **Column Chart** - Counts by category (horizontal)
-- **Pie Chart** - Proportions by category
-
-## Model Training
-
-The app provides:
-- **Train/Test Split** - 80/20 split with random state for reproducibility
-- **Cross-Validation** - 5-fold cross-validation for generalization assessment
-- **Performance Metrics**:
-  - Classification: Accuracy + CV scores
-  - Regression: R² score + CV scores
-- **Model Diagnostics**:
-  - Confusion matrix for classification
-  - Residuals plot for regression
-- **Model Export** - Download trained models as pickle files
-
-## Styling
-
-The app uses a dark theme with:
-- **Primary Color**: #667eea (purple-blue)
-- **Secondary Color**: #764ba2 (darker purple)
-- **Accent Color**: #10b981 (green)
-- **Background**: #181d29 (dark gray)
-
-Responsive design adapts to different screen sizes.
-
-## Technical Specifications
-
-For complete technical details, see `APP_SPECIFICATION.md`.
-
-## Future Enhancements
-
-- AI-assisted model recommendations (Groq integration)
-- Hyperparameter tuning UI
-- Feature importance plots
-- Statistical tests
-- Advanced data profiling
-- Time series support
-
-## Requirements
-
-- **Streamlit** 1.44.1
-- **Pandas** 2.3.0+
-- **Scikit-learn** 1.3.0+
-- **Matplotlib** 3.8.0+
-- **Seaborn** 0.13.0+
-- **NumPy** 1.23.0+
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Support
-
-For issues or questions, please open an issue in the repository.
+- **Workflow Steps** -- Navigation menu items and help text
+- **Model Definitions** -- Classification and regression model mappings
+- **Data Processing** -- IQR multiplier, train/test split ratio, cross-validation folds, random state
+- **Chart Types** -- Available visualization types with column requirements
+- **UI Settings** -- Theme colors, chart dimensions, preview row count
+- **Sample Datasets** -- Built-in datasets for quick testing
 
 ---
 
-**Created with Streamlit** | **Python 3.12.7** | **Version 1.0**
+## License
+
+MIT License -- see [LICENSE](LICENSE) for details.
