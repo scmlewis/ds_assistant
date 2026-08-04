@@ -27,6 +27,7 @@ import pickle
 from streamlit_option_menu import option_menu
 import config
 import core
+import modeling
 
 # Initialize Session State
 if "current_step" not in st.session_state:
@@ -41,6 +42,8 @@ if "pending_df" not in st.session_state:
     st.session_state.pending_df = None
 if "trained_models" not in st.session_state:
     st.session_state.trained_models = {}
+if "ml" not in st.session_state:
+    st.session_state.ml = {}
 
 
 # Custom CSS Styling
@@ -97,6 +100,23 @@ def apply_custom_styling():
         background-color: var(--bg-secondary) !important;
     }
 
+    /* Page header — flat, no gradient */
+    .app-header {
+        padding: 1.75rem 2rem;
+        border-radius: 10px;
+        margin: 0 0 2rem 0;
+        border: 1px solid var(--border-subtle);
+        background-color: var(--bg-secondary);
+    }
+
+    .app-title {
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
     /* Headings */
     h1 {
         color: var(--text-primary);
@@ -117,10 +137,21 @@ def apply_custom_styling():
 
     h3 {
         color: var(--text-primary);
-        font-weight: 600;
+        font-weight: 500;
         font-size: 1.05rem;
-        margin: 1.5rem 0 0.75rem 0;
-        letter-spacing: -0.2px;
+        margin: 1.25rem 0 0.5rem 0;
+    }
+
+    /* Help/Info Box — minimal */
+    .help-box {
+        background-color: var(--bg-surface);
+        border-left: 3px solid var(--accent-muted);
+        padding: 1rem 1.25rem;
+        border-radius: 0 6px 6px 0;
+        margin: 0 0 1.5rem 0;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
     }
 
     /* Stat Card — flat, left-aligned */
@@ -435,6 +466,9 @@ def apply_custom_styling():
             padding: 0.5rem 1rem;
             font-size: 0.85rem;
         }
+        .app-title {
+            font-size: 1.5rem;
+        }
         h1 {
             font-size: 1.35rem;
         }
@@ -517,21 +551,6 @@ def data_quality_report(df):
             "Percentage": (missing_data.values / len(df) * 100).round(2)
         })
         st.dataframe(missing_table[missing_table["Missing Count"] > 0], width="stretch")
-
-def page_header(kicker, title, subtitle=None):
-    """Unified page header — accent kicker, bold title, accent rule, optional subtitle."""
-    subtitle_html = ""
-    if subtitle:
-        subtitle_html = f'<p style="color: var(--text-secondary); font-size: 0.95rem; margin: 1rem 0 0 0; line-height: 1.6; max-width: 620px;">{subtitle}</p>'
-    html = (
-        '<div style="margin-bottom: 2rem;">'
-        f'<div style="color: var(--accent); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.6rem;">{kicker}</div>'
-        f'<h1 style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0; letter-spacing: -0.5px; line-height: 1.15;">{title}</h1>'
-        '<div style="width: 48px; height: 3px; background: var(--accent); border-radius: 2px; margin-top: 1rem;"></div>'
-        f'{subtitle_html}'
-        '</div>'
-    )
-    st.markdown(html, unsafe_allow_html=True)
 
 def empty_state(title, message):
     """Display user-friendly empty state UI."""
@@ -1134,11 +1153,18 @@ def navigation_buttons():
 def landing_page():
     """Landing page with welcome message."""
     # Hero — value-proposition headline
-    page_header(
-        "AI Data Science Assistant",
-        "From raw CSV to a trained model — without writing code.",
-        "Upload a file, clean it, explore it, and compare models in a few clicks. No Python required."
-    )
+    st.markdown("""
+    <div style="margin-bottom: 2.5rem;">
+        <div style="color: var(--accent); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 0.9rem;">AI Data Science Assistant</div>
+        <h1 style="font-size: 2.5rem; font-weight: 700; color: var(--text-primary); margin: 0 0 1rem 0; letter-spacing: -0.5px; line-height: 1.15; max-width: 760px;">
+            From raw CSV to a trained model — without writing code.
+        </h1>
+        <div style="width: 48px; height: 3px; background: var(--accent); border-radius: 2px; margin-bottom: 1.25rem;"></div>
+        <p style="color: var(--text-secondary); font-size: 1.05rem; margin: 0; font-weight: 400; max-width: 620px;">
+            Upload a file, clean it, explore it, and compare models in a few clicks. No Python required.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     if st.button("Start analyzing", key="hero_cta"):
         st.session_state.current_step = 1
@@ -1184,8 +1210,8 @@ def landing_page():
         st.markdown("""
         <div class="cap-card">
             <div class="cap-index">04</div>
-            <div class="cap-title">Model training</div>
-            <p>Auto-detects classification vs regression and trains three models with cross-validation, ROC curves, and feature importance.</p>
+            <div class="cap-title">ML Lab</div>
+            <p>Auto-detects classification vs regression, trains models with cross-validation, ROC curves, and feature importance. Now with hyperparameter tuning, interpretability, and diagnostics.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -1218,11 +1244,18 @@ def landing_page():
 
 def upload_and_schema():
     """Upload data and schema inspection page."""
-    page_header(
-        "Step 1 · Upload",
-        "Upload Data",
-        config.HELP_TEXTS[1]
-    )
+    st.markdown(f"""
+    <div class="app-header">
+        <div style="color: var(--text-tertiary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 1</div>
+        <h1 class="app-title">Upload Data</h1>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown(f"""
+    <div class="help-box">
+        {config.HELP_TEXTS[1]}
+    </div>
+    """, unsafe_allow_html=True)
     
     # Sample Datasets Section
     st.subheader("Sample datasets")
@@ -1316,11 +1349,18 @@ def upload_and_schema():
 
 def clean_data():
     """Data cleaning page."""
-    page_header(
-        "Step 2 · Clean",
-        "Clean Data",
-        config.HELP_TEXTS[2]
-    )
+    st.markdown(f"""
+    <div class="app-header">
+        <div style="color: var(--text-tertiary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 2</div>
+        <h1 class="app-title">Clean Data</h1>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown(f"""
+    <div class="help-box">
+        {config.HELP_TEXTS[2]}
+    </div>
+    """, unsafe_allow_html=True)
     
     if st.session_state.df is None:
         empty_state("No data available", "Please upload or load a dataset first.")
@@ -1594,11 +1634,18 @@ def clean_data():
 
 def visualize_data():
     """Data visualization page."""
-    page_header(
-        "Step 3 · Visualize",
-        "Visualize Data",
-        config.HELP_TEXTS[3]
-    )
+    st.markdown(f"""
+    <div class="app-header">
+        <div style="color: var(--text-tertiary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 3</div>
+        <h1 class="app-title">Visualize Data</h1>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown(f"""
+    <div class="help-box">
+        {config.HELP_TEXTS[3]}
+    </div>
+    """, unsafe_allow_html=True)
     
     if st.session_state.df is None:
         empty_state("No data available", "Please upload or load a dataset first.")
@@ -1799,185 +1846,159 @@ def visualize_data():
         else:
             st.info("Pair plots require at least 2 numeric columns.")
 
-def page_model_training():
-    """Model training and comparison page."""
-    page_header(
-        "Step 4 · Model",
-        "Model Training",
-        config.HELP_TEXTS[4]
-    )
-    
-    if st.session_state.df is None:
-        empty_state("No data available", "Please upload or load a dataset first.")
-        return
-    
+def _tab_configure_and_train():
     st.subheader("Model configuration")
-    
+
     col1, col2 = st.columns(2)
-    
+
     with col1:
         target_column = st.selectbox("Target column", st.session_state.df.columns, key="target_col")
-    
+
     target_data = st.session_state.df[target_column]
     is_numeric = pd.api.types.is_numeric_dtype(target_data)
     is_categorical = pd.api.types.is_categorical_dtype(target_data) or target_data.dtype == 'object'
     unique_values = target_data.nunique()
-    
+
     if is_categorical or (is_numeric and unique_values <= 10):
         recommended_mode = "Classification"
     else:
         recommended_mode = "Regression"
-    
+
     with col2:
-        mode = st.selectbox("Mode", ["Classification", "Regression"], 
-                           index=0 if recommended_mode == "Classification" else 1, 
+        mode = st.selectbox("Mode", ["Classification", "Regression"],
+                           index=0 if recommended_mode == "Classification" else 1,
                            key="mode",
                            help=f"Auto-detected: {recommended_mode} (based on target column)")
-    
+
     if mode == "Classification" and is_numeric and unique_values > 10:
         st.warning(f"Classification selected but target has {unique_values} unique continuous values. Consider using Regression instead.")
     elif mode == "Regression" and is_categorical:
         st.warning("Regression selected but target is categorical. Consider using Classification instead.")
-    
+
     st.subheader("Feature selection")
     available_features = [col for col in st.session_state.df.columns if col != target_column]
-    selected_features = st.multiselect("Select features", available_features, default=available_features[:min(3, len(available_features))], key="features")
-    
+    selected_features = st.multiselect("Select features", available_features,
+                                       default=available_features[:min(3, len(available_features))], key="features")
+
     if not selected_features:
         st.warning("Please select at least one feature.")
         return
-    
+
     st.subheader("Model selection")
     models = config.CLASSIFICATION_MODELS if mode == "Classification" else config.REGRESSION_MODELS
-    selected_models = st.multiselect("Select models", list(models.keys()), default=[list(models.keys())[0]], key="models")
-    
+    selected_models = st.multiselect("Select models", list(models.keys()),
+                                     default=[list(models.keys())[0]], key="models")
+
     if not selected_models:
         st.warning("Please select at least one model.")
         return
-    
+
     if st.button("Train models", width="stretch", key="train_btn"):
         X = st.session_state.df[selected_features]
         y = st.session_state.df[target_column]
-        
+
         is_valid, message = core.validate_data_for_modeling(X, y)
         if not is_valid:
             st.error(message)
             return
-        
+
         unique_y = y.nunique()
         if mode == "Classification" and unique_y > 10:
             st.error(f"Classification mode requires discrete target values, but found {unique_y} unique continuous values. Please select Regression mode instead.")
             return
-        
+
         if mode == "Regression" and pd.api.types.is_categorical_dtype(y):
             st.error("Regression mode requires numeric target values, but found categorical data. Please select Classification mode instead.")
             return
-        
+
+        scoring = "accuracy" if mode == "Classification" else "r2"
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=config.TRAIN_TEST_SPLIT_SIZE, random_state=config.RANDOM_STATE
+        )
+
         st.subheader("Training results")
-        results = []
-        model_instances = {}
-        
+        results_rows = []
         progress_bar = st.progress(0)
         status_text = st.empty()
-        
-        with st.spinner("Training models..."):
-            X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=config.TRAIN_TEST_SPLIT_SIZE, random_state=config.RANDOM_STATE
-            )
-            
-            for idx, model_name in enumerate(selected_models):
-                status_text.text(f"Training {model_name}...")
-                progress_bar.progress((idx + 1) / len(selected_models))
-                
-                if mode == "Classification":
-                    if model_name == "Logistic Regression":
-                        model = LogisticRegression(max_iter=1000, random_state=config.RANDOM_STATE)
-                    elif model_name == "Random Forest":
-                        model = RandomForestClassifier(n_estimators=100, random_state=config.RANDOM_STATE)
-                    else:
-                        model = DecisionTreeClassifier(random_state=config.RANDOM_STATE)
-                else:
-                    if model_name == "Linear Regression":
-                        model = LinearRegression()
-                    elif model_name == "Random Forest":
-                        model = RandomForestRegressor(n_estimators=100, random_state=config.RANDOM_STATE)
-                    else:
-                        model = DecisionTreeRegressor(random_state=config.RANDOM_STATE)
-                
-                model.fit(X_train, y_train)
-                y_pred = model.predict(X_test)
-                
-                y_pred_proba = None
-                is_binary = mode == "Classification" and unique_y == 2
-                if is_binary and hasattr(model, 'predict_proba'):
-                    y_pred_proba = model.predict_proba(X_test)[:, 1]
-                
-                if mode == "Classification":
-                    test_metric = accuracy_score(y_test, y_pred)
-                    cv_scores = cross_val_score(model, X_train, y_train, cv=config.CROSS_VAL_FOLDS, scoring='accuracy')
-                else:
-                    test_metric = r2_score(y_test, y_pred)
-                    cv_scores = cross_val_score(model, X_train, y_train, cv=config.CROSS_VAL_FOLDS, scoring='r2')
-                
-                results.append({
-                    "Model": model_name,
-                    "Test Metric": test_metric,
-                    "CV Mean": cv_scores.mean(),
-                    "CV Std": cv_scores.std()
-                })
-                
-                model_instances[model_name] = {
-                    "model": model,
-                    "X_test": X_test,
-                    "y_test": y_test,
-                    "y_pred": y_pred,
-                    "y_pred_proba": y_pred_proba,
-                    "cv_scores": cv_scores,
-                    "mode": mode,
-                    "is_binary": is_binary
-                }
-        
+
+        for idx, model_name in enumerate(selected_models):
+            status_text.text(f"Training {model_name}...")
+            progress_bar.progress((idx + 1) / len(selected_models))
+
+            pipe = modeling.build_pipeline(model_name)
+            pipe.fit(X_train, y_train)
+            y_pred = pipe.predict(X_test)
+
+            train_score = pipe.score(X_train, y_train)
+            test_score = pipe.score(X_test, y_test)
+            cv_scores = cross_val_score(pipe, X_train, y_train, cv=config.CROSS_VAL_FOLDS, scoring=scoring)
+
+            results_rows.append({
+                "Model": model_name,
+                "Train Score": train_score,
+                "Test Score": test_score,
+                "CV Mean": cv_scores.mean(),
+                "CV Std": cv_scores.std(),
+            })
+
+            is_binary = mode == "Classification" and unique_y == 2
+            y_pred_proba = None
+            if is_binary and hasattr(pipe, "predict_proba"):
+                y_pred_proba = pipe.predict_proba(X_test)[:, 1]
+
+            st.session_state.trained_models[model_name] = {
+                "pipeline": pipe,
+                "model": pipe,
+                "X_test": X_test,
+                "y_test": y_test,
+                "y_pred": y_pred,
+                "y_pred_proba": y_pred_proba,
+                "cv_scores": cv_scores,
+                "mode": mode,
+                "is_binary": is_binary,
+            }
+
         progress_bar.empty()
         status_text.empty()
-        
-        st.session_state.trained_models = model_instances
-        
-        results_df = pd.DataFrame(results)
+
+        results_df = pd.DataFrame(results_rows)
         st.dataframe(results_df, width="stretch")
-        
-        best_idx = results_df["Test Metric"].idxmax()
+
+        best_idx = results_df["Test Score"].idxmax()
         best_model = results_df.loc[best_idx, "Model"]
-        best_score = results_df.loc[best_idx, "Test Metric"]
-        
+        best_score = results_df.loc[best_idx, "Test Score"]
         st.success(f"Best model: **{best_model}** (Score: {best_score:.4f})")
-        
+
+        best = st.session_state.trained_models[best_model]
+
         st.subheader("Model diagnostics")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
+
+        diag_col1, diag_col2 = st.columns(2)
+
+        with diag_col1:
             if mode == "Classification":
                 st.write("**Confusion matrix (best model)**")
-                best_model_data = st.session_state.trained_models[best_model]
-                cm = confusion_matrix(best_model_data["y_test"], best_model_data["y_pred"])
-                
+                cm = confusion_matrix(best["y_test"], best["y_pred"])
                 cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-                
+
                 fig, ax = plt.subplots(figsize=(8, 6))
                 fig.patch.set_facecolor('#181b22')
                 ax.set_facecolor('#1e2129')
-                
-                heatmap = sns.heatmap(cm, annot=False, cmap='Blues', ax=ax, cbar_kws={'label': 'Count'},
-                           linewidths=0.5, linecolor='#181b22')
-                
+
+                heatmap = sns.heatmap(cm, annot=False, cmap='Blues', ax=ax,
+                                      cbar_kws={'label': 'Count'},
+                                      linewidths=0.5, linecolor='#181b22')
+
                 for i in range(cm.shape[0]):
                     for j in range(cm.shape[1]):
                         count = cm[i, j]
                         pct = cm_normalized[i, j] * 100
-                        text = ax.text(j + 0.5, i + 0.5, f'{int(count)}\n({pct:.1f}%)',
-                                      ha="center", va="center", color='#dfe2e8' if count < cm.max()/2 else '#111318',
-                                      fontweight='600', fontsize=11)
-                
+                        ax.text(j + 0.5, i + 0.5, f'{int(count)}\n({pct:.1f}%)',
+                                ha="center", va="center",
+                                color='#dfe2e8' if count < cm.max()/2 else '#111318',
+                                fontweight='600', fontsize=11)
+
                 ax.set_xlabel('Predicted', color='#dfe2e8', fontweight='500', fontsize=12)
                 ax.set_ylabel('Actual', color='#dfe2e8', fontweight='500', fontsize=12)
                 ax.set_title('Confusion matrix', color='#dfe2e8', fontweight='500', fontsize=13, pad=15)
@@ -1987,16 +2008,15 @@ def page_model_training():
                     cbar.set_label('Count', color='#dfe2e8')
                     cbar.ax.tick_params(colors='#dfe2e8')
                 st.pyplot(fig, width="stretch")
-        
-        with col2:
+
+        with diag_col2:
             if mode == "Regression":
                 st.write("**Residuals plot (best model)**")
-                best_model_data = st.session_state.trained_models[best_model]
-                residuals = best_model_data["y_test"] - best_model_data["y_pred"]
+                residuals = best["y_test"] - best["y_pred"]
                 fig, ax = plt.subplots(figsize=(8, 6))
                 fig.patch.set_facecolor('#181b22')
                 ax.set_facecolor('#1e2129')
-                ax.scatter(best_model_data["y_pred"], residuals, alpha=0.6, color='#6b8aed', s=50, edgecolors='#282c34')
+                ax.scatter(best["y_pred"], residuals, alpha=0.6, color='#6b8aed', s=50, edgecolors='#282c34')
                 ax.axhline(y=0, color='#f87171', linestyle='--', linewidth=2)
                 ax.set_xlabel('Predicted values', color='#dfe2e8', fontweight='500')
                 ax.set_ylabel('Residuals', color='#dfe2e8', fontweight='500')
@@ -2006,36 +2026,27 @@ def page_model_training():
                     spine.set_color('#282c34')
                 st.pyplot(fig, width="stretch")
             elif mode == "Classification":
-                best_model_data = st.session_state.trained_models[best_model]
-                if best_model_data.get("is_binary") and best_model_data["y_pred_proba"] is not None:
+                if best.get("is_binary") and best["y_pred_proba"] is not None:
                     st.write("**ROC curve (best model)**")
-                    roc_fig, roc_auc = plot_roc_curve(best_model_data["y_test"], best_model_data["y_pred_proba"], best_model)
+                    roc_fig, roc_auc = plot_roc_curve(best["y_test"], best["y_pred_proba"], best_model)
                     st.pyplot(roc_fig, width="stretch")
                 else:
                     st.info("ROC curve is available only for binary classification with probability outputs.")
-        
+
         st.subheader("Sample predictions")
-        best_model_data = st.session_state.trained_models[best_model]
         sample_predictions = pd.DataFrame({
-            "Actual": best_model_data["y_test"].values[:10],
-            "Predicted": best_model_data["y_pred"][:10]
+            "Actual": best["y_test"].values[:10],
+            "Predicted": best["y_pred"][:10]
         })
         st.dataframe(sample_predictions, width="stretch")
-        
-        engineered_cols = [col for col in st.session_state.df.columns 
-                          if any(x in col for x in ['_poly', '_x_', '_binned'])]
-        if engineered_cols:
-            st.success(f"Using {len(engineered_cols)} engineered features from Clean Data page")
-            with st.expander("View engineered features"):
-                st.write(engineered_cols)
-        
+
         st.subheader("Export report")
         profile, col_profile = generate_data_profile(st.session_state.df)
         stat_summary = core.get_statistical_summary(st.session_state.df)
-        
-        html_report = generate_html_report(st.session_state.df, profile, stat_summary, 
+
+        html_report = generate_html_report(st.session_state.df, profile, stat_summary,
                                            trained_models=st.session_state.trained_models, mode=mode)
-        
+
         st.download_button(
             label="Download HTML report",
             data=html_report,
@@ -2043,9 +2054,9 @@ def page_model_training():
             mime="text/html",
             width="stretch"
         )
-        
+
         st.subheader("Export model")
-        model_bytes = pickle.dumps(st.session_state.trained_models[best_model]["model"])
+        model_bytes = pickle.dumps(best["model"])
         st.download_button(
             label="Download best model (pickle)",
             data=model_bytes,
@@ -2053,6 +2064,32 @@ def page_model_training():
             mime="application/octet-stream",
             width="stretch"
         )
+
+
+def page_model_training():
+    st.markdown(f"""
+    <div class="app-header">
+        <div style="color: var(--text-tertiary); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;">Step 4</div>
+        <h1 class="app-title">ML Lab</h1>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="help-box">
+        {config.HELP_TEXTS[4]}
+    </div>
+    """, unsafe_allow_html=True)
+
+    if st.session_state.df is None:
+        empty_state("No data available", "Please upload or load a dataset first.")
+        return
+
+    tab_train, tab_tune, tab_interpret, tab_diagnose = st.tabs(
+        ["Configure & Train", "Tune", "Interpret", "Diagnose"]
+    )
+
+    with tab_train:
+        _tab_configure_and_train()
 
 # ============================================================================
 # MAIN APP
