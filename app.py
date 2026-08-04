@@ -1846,6 +1846,147 @@ def visualize_data():
         else:
             st.info("Pair plots require at least 2 numeric columns.")
 
+def _tab_interpret():
+    if not st.session_state.trained_models:
+        st.info("Train a model in the **Configure & Train** tab first.")
+        return
+
+    model_names = list(st.session_state.trained_models.keys())
+    selected_model = st.selectbox("Model to interpret", model_names, key="interp_model")
+
+    md = st.session_state.trained_models[selected_model]
+    mode = md["mode"]
+    feature_names = list(md["X_test"].columns)
+
+    st.subheader("Feature importance")
+
+    source = st.radio("Importance source", ["Permutation", "Model coefficients", "Built-in"],
+                       horizontal=True, key="imp_source")
+
+    if st.button("Compute importance", key="comp_imp_btn"):
+        with st.spinner("Computing..."):
+            if source == "Permutation":
+                importance_df = modeling.permutation_feature_importance(
+                    md["model"], md["X_test"], md["y_test"], feature_names
+                )
+            elif source == "Model coefficients":
+                importance_df = modeling.get_model_coefficients(md["model"], feature_names)
+            else:
+                if hasattr(md["model"], "feature_importances_"):
+                    raw = md["model"].feature_importances_
+                elif hasattr(md["model"], "named_steps"):
+                    final = md["model"].named_steps.get("model")
+                    if final is not None and hasattr(final, "feature_importances_"):
+                        raw = final.feature_importances_
+                    else:
+                        raw = None
+                else:
+                    raw = None
+
+                if raw is None:
+                    importance_df = None
+                else:
+                    importance_df = pd.DataFrame({
+                        "feature": feature_names,
+                        "importance": raw,
+                    }).sort_values("importance", ascending=False)
+
+        if importance_df is None or importance_df.empty:
+            st.warning("Cannot extract importance for this model/source combination.")
+        else:
+            fig, ax = plt.subplots(figsize=(8, max(3, len(importance_df) * 0.4)))
+            fig.patch.set_facecolor('#181b22')
+            ax.set_facecolor('#1e2129')
+
+            importance_col = "importance" if "importance" in importance_df.columns else "coefficient"
+            plot_df = importance_df.sort_values(importance_col)
+
+            ax.barh(plot_df["feature"], plot_df[importance_col], color="#6b8aed", edgecolor="#282c34")
+            ax.set_xlabel("Importance" if source != "Model coefficients" else "Coefficient",
+                          color="#dfe2e8", fontweight="500")
+            ax.set_title(f"{source} importance", color="#dfe2e8", fontweight="500", pad=15)
+            ax.tick_params(colors="#dfe2e8")
+            for spine in ax.spines.values():
+                spine.set_color("#282c34")
+            plt.tight_layout()
+            st.pyplot(fig, width="stretch")
+
+            st.dataframe(importance_df, width="stretch")
+
+    st.divider()
+    st.subheader("Partial dependence")
+
+    pdp_features = st.multiselect("Features (1-2)", feature_names,
+                                   default=[feature_names[0]] if feature_names else [],
+                                   max_selections=2, key="pdp_features")
+
+    if pdp_features and st.button("Compute partial dependence", key="pdp_btn"):
+        with st.spinner("Computing..."):
+            pdp = modeling.partial_dependence_data(md["model"], md["X_test"], pdp_features)
+
+        if len(pdp_features) == 1:
+            fig, ax = plt.subplots(figsize=(8, 5))
+            fig.patch.set_facecolor('#181b22')
+            ax.set_facecolor('#1e2129')
+            ax.plot(pdp["grid_values"], pdp["pdp_values"], color="#6b8aed", linewidth=2.5)
+            ax.fill_between(pdp["grid_values"], pdp["pdp_values"], alpha=0.15, color="#6b8aed")
+            ax.set_xlabel(pdp_features[0], color="#dfe2e8", fontweight="500")
+            ax.set_ylabel("Partial dependence", color="#dfe2e8", fontweight="500")
+            ax.set_title(f"PDP — {pdp_features[0]}", color="#dfe2e8", fontweight="500", pad=15)
+            ax.tick_params(colors="#dfe2e8")
+            for spine in ax.spines.values():
+                spine.set_color("#282c34")
+            ax.grid(True, alpha=0.1, color="#282c34")
+            plt.tight_layout()
+            st.pyplot(fig, width="stretch")
+        else:
+            if isinstance(pdp.get("pdp_values"), np.ndarray) and pdp["pdp_values"].ndim == 2:
+                fig, ax = plt.subplots(figsize=(8, 6))
+                fig.patch.set_facecolor('#181b22')
+                ax.set_facecolor('#1e2129')
+                im = ax.pcolormesh(pdp["grid_values"][0], pdp["grid_values"][1],
+                                   pdp["pdp_values"], cmap="RdBu_r", shading="auto")
+                ax.set_xlabel(pdp_features[0], color="#dfe2e8", fontweight="500")
+                ax.set_ylabel(pdp_features[1], color="#dfe2e8", fontweight="500")
+                ax.set_title(f"PDP — {pdp_features[0]} x {pdp_features[1]}",
+                             color="#dfe2e8", fontweight="500", pad=15)
+                ax.tick_params(colors="#dfe2e8")
+                fig.colorbar(im, ax=ax)
+                plt.tight_layout()
+                st.pyplot(fig, width="stretch")
+            else:
+                st.dataframe(pdp, width="stretch")
+
+    st.divider()
+    st.subheader("Explain a single prediction")
+
+    row_idx = st.slider("Row index", 0, len(md["X_test"]) - 1, 0, key="explain_row")
+
+    if st.button("Explain prediction", key="explain_btn"):
+        with st.spinner("Computing..."):
+            explanation = modeling.explain_prediction(
+                md["model"], md["X_test"], md["y_test"], row_idx,
+                feature_names=feature_names
+            )
+
+        st.dataframe(explanation, width="stretch")
+
+        fig, ax = plt.subplots(figsize=(8, max(3, len(explanation) * 0.5)))
+        fig.patch.set_facecolor('#181b22')
+        ax.set_facecolor('#1e2129')
+
+        colors = ["#4ade80" if v >= 0 else "#f87171" for v in explanation["contribution"]]
+        ax.barh(explanation["feature"], explanation["contribution"], color=colors, edgecolor="#282c34")
+        ax.set_xlabel("Contribution", color="#dfe2e8", fontweight="500")
+        ax.set_title(f"Prediction explanation (row {row_idx})", color="#dfe2e8", fontweight="500", pad=15)
+        ax.tick_params(colors="#dfe2e8")
+        ax.axvline(x=0, color="#dfe2e8", linewidth=0.5)
+        for spine in ax.spines.values():
+            spine.set_color("#282c34")
+        plt.tight_layout()
+        st.pyplot(fig, width="stretch")
+
+
 def _tab_tune():
     if not st.session_state.trained_models:
         st.info("Train a model in the **Configure & Train** tab first.")
@@ -2249,6 +2390,9 @@ def page_model_training():
 
     with tab_tune:
         _tab_tune()
+
+    with tab_interpret:
+        _tab_interpret()
 
 # ============================================================================
 # MAIN APP
