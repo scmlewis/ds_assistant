@@ -6,7 +6,7 @@ STEPS = {
     1: {"name": "Upload Data", "help": "Upload a CSV file or load a sample dataset (Iris for classification, Diabetes for regression)."},
     2: {"name": "Clean Data", "help": "Apply data cleaning operations: remove duplicates, handle missing values, standardize columns, and scale features."},
     3: {"name": "Visualize", "help": "Create visualizations including correlation heatmaps and custom charts to explore your data."},
-    4: {"name": "Model", "help": "Train and compare machine learning models for classification or regression tasks."},
+    4: {"name": "ML Lab", "help": "Configure, train, tune, interpret, and diagnose machine learning models."},
 }
 
 STEP_NAMES = [step["name"] for step in STEPS.values()]
@@ -18,12 +18,18 @@ CLASSIFICATION_MODELS = {
     "Logistic Regression": "LogisticRegression",
     "Random Forest": "RandomForestClassifier",
     "Decision Tree": "DecisionTreeClassifier",
+    "SVM": "SVC",
+    "K-Nearest Neighbors": "KNeighborsClassifier",
+    "Gradient Boosting": "GradientBoostingClassifier",
 }
 
 REGRESSION_MODELS = {
     "Linear Regression": "LinearRegression",
     "Random Forest": "RandomForestRegressor",
     "Decision Tree": "DecisionTreeRegressor",
+    "SVM": "SVR",
+    "K-Nearest Neighbors": "KNeighborsRegressor",
+    "Gradient Boosting": "GradientBoostingRegressor",
 }
 
 # Data Processing Parameters
