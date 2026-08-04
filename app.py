@@ -1846,6 +1846,162 @@ def visualize_data():
         else:
             st.info("Pair plots require at least 2 numeric columns.")
 
+def _tab_tune():
+    if not st.session_state.trained_models:
+        st.info("Train a model in the **Configure & Train** tab first.")
+        return
+
+    st.subheader("Hyperparameter tuning")
+
+    model_names = list(st.session_state.trained_models.keys())
+    selected_model = st.selectbox("Model to tune", model_names, key="tune_model")
+
+    search_type = st.radio("Search type", ["Grid Search", "Randomized Search"],
+                           horizontal=True, key="search_type")
+
+    pipe = st.session_state.trained_models[selected_model]["pipeline"]
+    param_grid = modeling.get_param_grid(selected_model)
+
+    if not param_grid:
+        st.info(f"**{selected_model}** has no tunable hyperparameters in the grid. Try a different model.")
+        return
+
+    with st.expander("Parameter grid", expanded=False):
+        st.json(param_grid)
+
+    n_iter = 10
+    if search_type == "Randomized Search":
+        n_iter = st.slider("n_iter (random search iterations)", 5, 100, 10, key="n_iter")
+
+    cv_folds = st.slider("CV folds", 2, 10, config.CROSS_VAL_FOLDS, key="tune_cv")
+
+    if st.button("Run tuning", width="stretch", key="run_tuning_btn"):
+        X = None
+        y = None
+        for name in model_names:
+            if name == selected_model:
+                md = st.session_state.trained_models[name]
+                X = pd.concat([md["X_test"], md["X_test"]])
+                y = pd.concat([md["y_test"], md["y_test"]])
+                break
+
+        if X is None:
+            st.error("Could not retrieve training data.")
+            return
+
+        with st.spinner("Running hyperparameter search..."):
+            mode = st.session_state.trained_models[selected_model]["mode"]
+            scoring = "accuracy" if mode == "Classification" else "r2"
+
+            if search_type == "Grid Search":
+                result = modeling.run_grid_search(pipe, X, y, param_grid, cv=cv_folds, scoring=scoring)
+            else:
+                result = modeling.run_random_search(pipe, X, y, param_grid, n_iter=n_iter, cv=cv_folds, scoring=scoring)
+
+        st.success("Tuning complete!")
+
+        st.subheader("Best parameters")
+        st.json(result.best_params_)
+
+        st.subheader("CV results")
+        cv_results = pd.DataFrame(result.cv_results_)
+        display_cols = ["params", "mean_test_score", "std_test_score", "rank_test_score"]
+        existing_cols = [c for c in display_cols if c in cv_results.columns]
+        st.dataframe(cv_results[existing_cols].head(20), width="stretch")
+
+        st.session_state.trained_models[selected_model]["tuned_model"] = result.best_estimator_
+        st.session_state.trained_models[selected_model]["best_params"] = result.best_params_
+
+    st.divider()
+    st.subheader("Complexity curves")
+
+    if st.session_state.trained_models[selected_model].get("tuned_model"):
+        tuned = st.session_state.trained_models[selected_model]["tuned_model"]
+    else:
+        tuned = pipe
+
+    mode = st.session_state.trained_models[selected_model]["mode"]
+    X_for_curves = st.session_state.trained_models[selected_model]["X_test"]
+    y_for_curves = st.session_state.trained_models[selected_model]["y_test"]
+    scoring = "accuracy" if mode == "Classification" else "r2"
+
+    curve_col1, curve_col2 = st.columns(2)
+
+    with curve_col1:
+        st.write("**Learning curve**")
+        if st.button("Compute learning curve", key="lc_btn"):
+            with st.spinner("Computing..."):
+                lc = modeling.compute_learning_curve(tuned, X_for_curves, y_for_curves, cv=cv_folds, scoring=scoring)
+
+            fig, ax = plt.subplots(figsize=(8, 5))
+            fig.patch.set_facecolor('#181b22')
+            ax.set_facecolor('#1e2129')
+
+            ax.plot(lc["train_sizes"], lc["train_mean"], "o-", color="#6b8aed", label="Training score")
+            ax.fill_between(lc["train_sizes"], lc["train_mean"] - lc["train_std"],
+                            lc["train_mean"] + lc["train_std"], alpha=0.15, color="#6b8aed")
+            ax.plot(lc["train_sizes"], lc["cv_mean"], "o-", color="#f87171", label="CV score")
+            ax.fill_between(lc["train_sizes"], lc["cv_mean"] - lc["cv_std"],
+                            lc["cv_mean"] + lc["cv_std"], alpha=0.15, color="#f87171")
+
+            ax.set_xlabel("Training set size", color="#dfe2e8", fontweight="500")
+            ax.set_ylabel("Score", color="#dfe2e8", fontweight="500")
+            ax.set_title("Learning curve", color="#dfe2e8", fontweight="500", pad=15)
+            ax.tick_params(colors="#dfe2e8")
+            ax.legend(facecolor="#1e2129", edgecolor="#282c34", labelcolor="#dfe2e8")
+            for spine in ax.spines.values():
+                spine.set_color("#282c34")
+            ax.grid(True, alpha=0.1, color="#282c34")
+            plt.tight_layout()
+            st.pyplot(fig, width="stretch")
+
+            gap = lc["train_mean"][-1] - lc["cv_mean"][-1]
+            if gap > 0.1:
+                st.warning(f"**Overfitting detected.** Gap between train ({lc['train_mean'][-1]:.3f}) and CV ({lc['cv_mean'][-1]:.3f}) is {gap:.3f}. Try more data or simpler model.")
+            elif lc["cv_mean"][-1] < 0.6:
+                st.info("**Underfitting.** Both scores are low. Try a more complex model or more features.")
+            else:
+                st.success(f"**Good fit.** Train ({lc['train_mean'][-1]:.3f}) and CV ({lc['cv_mean'][-1]:.3f}) are close.")
+
+    with curve_col2:
+        st.write("**Validation curve**")
+        param_name = st.selectbox("Hyperparameter", list(param_grid.keys()), key="vc_param")
+        param_range = param_grid[param_name]
+
+        if st.button("Compute validation curve", key="vc_btn"):
+            with st.spinner("Computing..."):
+                vc = modeling.compute_validation_curve(tuned, X_for_curves, y_for_curves,
+                                                       param_name=param_name, param_range=param_range,
+                                                       cv=cv_folds, scoring=scoring)
+
+            fig, ax = plt.subplots(figsize=(8, 5))
+            fig.patch.set_facecolor('#181b22')
+            ax.set_facecolor('#1e2129')
+
+            ax.plot(param_range, vc["train_mean"], "o-", color="#6b8aed", label="Training score")
+            ax.fill_between(param_range, vc["train_mean"] - vc["train_std"],
+                            vc["train_mean"] + vc["train_std"], alpha=0.15, color="#6b8aed")
+            ax.plot(param_range, vc["cv_mean"], "o-", color="#f87171", label="CV score")
+            ax.fill_between(param_range, vc["cv_mean"] - vc["cv_std"],
+                            vc["cv_mean"] + vc["cv_std"], alpha=0.15, color="#f87171")
+
+            best_idx = np.argmax(vc["cv_mean"])
+            ax.axvline(x=param_range[best_idx], color="#4ade80", linestyle="--", linewidth=1.5, label=f"Best: {param_range[best_idx]}")
+
+            ax.set_xlabel(param_name, color="#dfe2e8", fontweight="500")
+            ax.set_ylabel("Score", color="#dfe2e8", fontweight="500")
+            ax.set_title(f"Validation curve — {param_name}", color="#dfe2e8", fontweight="500", pad=15)
+            ax.tick_params(colors="#dfe2e8")
+            ax.legend(facecolor="#1e2129", edgecolor="#282c34", labelcolor="#dfe2e8")
+            for spine in ax.spines.values():
+                spine.set_color("#282c34")
+            ax.grid(True, alpha=0.1, color="#282c34")
+            plt.tight_layout()
+            st.pyplot(fig, width="stretch")
+
+            st.info(f"**Best value:** `{param_range[best_idx]}` (score: {vc['cv_mean'][best_idx]:.3f})")
+
+
 def _tab_configure_and_train():
     st.subheader("Model configuration")
 
@@ -2090,6 +2246,9 @@ def page_model_training():
 
     with tab_train:
         _tab_configure_and_train()
+
+    with tab_tune:
+        _tab_tune()
 
 # ============================================================================
 # MAIN APP
