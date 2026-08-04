@@ -102,6 +102,32 @@ def build_pipeline(model_name: str, scaler: str = "standard") -> Pipeline:
     return Pipeline([("model", model_class())])
 
 
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+
+
+def run_grid_search(
+    pipeline,
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    param_grid: dict,
+    cv: int = 5,
+    search_type: str = "grid",
+    n_iter: int = 20,
+):
+    if search_type == "random":
+        search = RandomizedSearchCV(
+            pipeline, param_grid, cv=cv, n_iter=n_iter,
+            scoring="accuracy", n_jobs=-1, random_state=42,
+        )
+    else:
+        search = GridSearchCV(
+            pipeline, param_grid, cv=cv,
+            scoring="accuracy", n_jobs=-1,
+        )
+    search.fit(X_train, y_train)
+    return search
+
+
 def get_param_grid(model_name: str) -> dict:
     if model_name not in PARAM_GRIDS:
         raise ValueError(

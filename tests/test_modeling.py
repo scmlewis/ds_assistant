@@ -127,3 +127,31 @@ def test_get_param_grid_regression_models():
 def test_get_param_grid_unknown_model_raises():
     with pytest.raises(ValueError, match="Unknown model"):
         modeling.get_param_grid("Nonexistent Model")
+
+
+def test_run_grid_search_returns_grid_search_cv():
+    from sklearn.model_selection import GridSearchCV
+    X = pd.DataFrame({"a": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                       "b": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
+    y = pd.Series([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+    pipe = modeling.build_pipeline("Logistic Regression")
+    param_grid = {"model__C": [0.1, 1.0, 10.0]}
+    result = modeling.run_grid_search(pipe, X_train=X, y_train=y, param_grid=param_grid, cv=3)
+    assert isinstance(result, GridSearchCV)
+    assert hasattr(result, "best_params_")
+    assert "model__C" in result.best_params_
+
+
+def test_run_random_search_returns_randomized_search_cv():
+    from sklearn.model_selection import RandomizedSearchCV
+    X = pd.DataFrame({"a": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                       "b": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
+    y = pd.Series([0, 0, 0, 0, 0, 1, 1, 1, 1, 1])
+    pipe = modeling.build_pipeline("Logistic Regression")
+    param_grid = {"model__C": [0.1, 1.0, 10.0]}
+    result = modeling.run_grid_search(
+        pipe, X_train=X, y_train=y, param_grid=param_grid, cv=3,
+        search_type="random", n_iter=2
+    )
+    assert isinstance(result, RandomizedSearchCV)
+    assert hasattr(result, "best_params_")
