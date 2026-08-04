@@ -104,6 +104,7 @@ def build_pipeline(model_name: str, scaler: str = "standard") -> Pipeline:
 
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, learning_curve, validation_curve
 from sklearn.inspection import permutation_importance as sklearn_permutation_importance
+from sklearn.inspection import partial_dependence as sklearn_partial_dependence
 
 
 def run_grid_search(
@@ -212,6 +213,81 @@ def get_model_coefficients(model, feature_names: list) -> pd.DataFrame | None:
     })
 
     return df.sort_values("coefficient", key=abs, ascending=False).reset_index(drop=True)
+
+
+def partial_dependence_data(
+    model,
+    X: pd.DataFrame,
+    features: list,
+    grid_resolution: int = 50,
+) -> dict:
+    X_float = X.copy()
+    for col in X_float.select_dtypes(include=[np.integer]).columns:
+        X_float[col] = X_float[col].astype(float)
+
+    result = sklearn_partial_dependence(
+        model, X_float, features=features, grid_resolution=grid_resolution
+    )
+
+    if len(features) == 1:
+        return {
+            "feature": features[0],
+            "grid_values": result["grid_values"][0].tolist(),
+            "average": result["average"][0].tolist(),
+        }
+    else:
+        return {
+            "feature": features,
+            "grid_values": [gv.tolist() for gv in result["grid_values"]],
+            "average": result["average"].tolist(),
+        }
+
+
+def explain_prediction(
+    model,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+    row_idx: int,
+    feature_names: list,
+) -> pd.DataFrame:
+    try:
+        named_steps = dict(model.steps)
+    except AttributeError:
+        named_steps = {}
+
+    estimator = named_steps.get("model", model)
+
+    if hasattr(estimator, "coef_"):
+        coefs = estimator.coef_
+        if coefs.ndim > 1:
+            coefs = coefs[0]
+        intercept = getattr(estimator, "intercept_", 0)
+        if hasattr(intercept, "__len__"):
+            intercept = intercept[0]
+        values = X_test.iloc[row_idx].values[: len(coefs)]
+        contributions = coefs * values
+        contributions_with_intercept = np.append(intercept, contributions)
+        labels = ["intercept"] + feature_names[: len(coefs)]
+
+        df = pd.DataFrame({
+            "feature": labels,
+            "value": [intercept] + values.tolist(),
+            "contribution": contributions_with_intercept,
+        })
+        return df.sort_values("contribution", key=abs, ascending=False).reset_index(drop=True)
+    else:
+        importances = getattr(estimator, "feature_importances_", None)
+        if importances is None:
+            importances = np.ones(len(feature_names)) / len(feature_names)
+
+        values = X_test.iloc[row_idx].values[: len(importances)]
+
+        df = pd.DataFrame({
+            "feature": feature_names[: len(importances)],
+            "value": values,
+            "contribution": importances,
+        })
+        return df.sort_values("contribution", ascending=False).reset_index(drop=True)
 
 
 def get_param_grid(model_name: str) -> dict:

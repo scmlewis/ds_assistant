@@ -238,3 +238,50 @@ def test_get_model_coefficients_nonlinear_returns_none():
     pipe.fit(X, y)
     result = modeling.get_model_coefficients(pipe, ["a", "b"])
     assert result is None
+
+
+def test_partial_dependence_data_single_feature():
+    X = pd.DataFrame({"a": range(100), "b": range(100)})
+    y = pd.Series([0] * 50 + [1] * 50)
+    pipe = modeling.build_pipeline("Logistic Regression")
+    pipe.fit(X, y)
+    result = modeling.partial_dependence_data(pipe, X, ["a"], grid_resolution=20)
+    assert "feature" in result
+    assert "grid_values" in result
+    assert "average" in result
+    assert result["feature"] == "a"
+
+
+def test_partial_dependence_data_two_features():
+    X = pd.DataFrame({"a": range(100), "b": range(100)})
+    y = pd.Series([0] * 50 + [1] * 50)
+    pipe = modeling.build_pipeline("Logistic Regression")
+    pipe.fit(X, y)
+    result = modeling.partial_dependence_data(pipe, X, ["a", "b"], grid_resolution=20)
+    assert "feature" in result
+    assert "grid_values" in result
+    assert "average" in result
+    assert isinstance(result["average"], list)
+
+
+def test_explain_prediction_returns_dataframe():
+    X = pd.DataFrame({"a": range(100), "b": range(100)})
+    y = pd.Series([0] * 50 + [1] * 50)
+    pipe = modeling.build_pipeline("Logistic Regression")
+    pipe.fit(X, y)
+    result = modeling.explain_prediction(pipe, X, y, row_idx=0, feature_names=["a", "b"])
+    assert isinstance(result, pd.DataFrame)
+    assert "feature" in result.columns
+    assert "value" in result.columns
+    assert "contribution" in result.columns
+    assert len(result) == 3  # intercept + 2 features
+
+
+def test_explain_prediction_nonlinear_model():
+    X = pd.DataFrame({"a": range(100), "b": range(100)})
+    y = pd.Series([0] * 50 + [1] * 50)
+    pipe = modeling.build_pipeline("Random Forest")
+    pipe.fit(X, y)
+    result = modeling.explain_prediction(pipe, X, y, row_idx=0, feature_names=["a", "b"])
+    assert isinstance(result, pd.DataFrame)
+    assert len(result) == 2
