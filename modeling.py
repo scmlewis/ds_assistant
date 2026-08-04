@@ -102,7 +102,7 @@ def build_pipeline(model_name: str, scaler: str = "standard") -> Pipeline:
     return Pipeline([("model", model_class())])
 
 
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, learning_curve, validation_curve
 
 
 def run_grid_search(
@@ -126,6 +126,50 @@ def run_grid_search(
         )
     search.fit(X_train, y_train)
     return search
+
+
+def compute_learning_curve(
+    estimator,
+    X: pd.DataFrame,
+    y: pd.Series,
+    cv: int = 5,
+    train_sizes: np.ndarray = None,
+) -> dict:
+    if train_sizes is None:
+        train_sizes = np.linspace(0.1, 1.0, 10)
+
+    train_sizes_abs, train_scores, val_scores = learning_curve(
+        estimator, X, y, cv=cv, train_sizes=train_sizes,
+        scoring="accuracy", n_jobs=-1,
+    )
+
+    return {
+        "train_sizes": train_sizes_abs.tolist(),
+        "train_scores": train_scores.tolist(),
+        "val_scores": val_scores.tolist(),
+    }
+
+
+def compute_validation_curve(
+    estimator,
+    X: pd.DataFrame,
+    y: pd.Series,
+    param_name: str,
+    param_range: np.ndarray,
+    cv: int = 5,
+) -> dict:
+    train_scores, val_scores = validation_curve(
+        estimator, X, y,
+        param_name=param_name,
+        param_range=param_range,
+        cv=cv, scoring="accuracy", n_jobs=-1,
+    )
+
+    return {
+        "param_range": param_range.tolist(),
+        "train_scores": train_scores.tolist(),
+        "val_scores": val_scores.tolist(),
+    }
 
 
 def get_param_grid(model_name: str) -> dict:

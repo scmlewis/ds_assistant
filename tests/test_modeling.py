@@ -155,3 +155,43 @@ def test_run_random_search_returns_randomized_search_cv():
     )
     assert isinstance(result, RandomizedSearchCV)
     assert hasattr(result, "best_params_")
+
+
+def test_compute_learning_curve_returns_expected_keys():
+    X = pd.DataFrame({"a": range(100), "b": range(100)})
+    y = pd.Series([0] * 50 + [1] * 50)
+    pipe = modeling.build_pipeline("Logistic Regression")
+    pipe.fit(X, y)
+    result = modeling.compute_learning_curve(pipe, X, y, cv=3)
+    assert "train_sizes" in result
+    assert "train_scores" in result
+    assert "val_scores" in result
+    assert len(result["train_sizes"]) == len(result["train_scores"])
+    assert len(result["train_sizes"]) == len(result["val_scores"])
+
+
+def test_compute_learning_curve_custom_train_sizes():
+    X = pd.DataFrame({"a": range(100), "b": range(100)})
+    y = pd.Series([0] * 50 + [1] * 50)
+    pipe = modeling.build_pipeline("Logistic Regression")
+    pipe.fit(X, y)
+    custom_sizes = np.array([0.2, 0.4, 0.6, 0.8, 1.0])
+    result = modeling.compute_learning_curve(
+        pipe, X, y, cv=3, train_sizes=custom_sizes
+    )
+    assert len(result["train_sizes"]) == 5
+
+
+def test_compute_validation_curve_returns_expected_keys():
+    X = pd.DataFrame({"a": range(100), "b": range(100)})
+    y = pd.Series([0] * 50 + [1] * 50)
+    pipe = modeling.build_pipeline("Logistic Regression")
+    pipe.fit(X, y)
+    result = modeling.compute_validation_curve(
+        pipe, X, y, param_name="model__C",
+        param_range=np.array([0.01, 0.1, 1.0, 10.0]), cv=3
+    )
+    assert "param_range" in result
+    assert "train_scores" in result
+    assert "val_scores" in result
+    assert len(result["param_range"]) == 4
