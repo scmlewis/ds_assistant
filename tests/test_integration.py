@@ -87,12 +87,19 @@ class TestRegressionPipeline:
         assert diagnosis["verdict"] in ("Good fit", "Possible overfitting", "Underfitting", "High variance")
 
     def test_all_regression_models_fit(self, diabetes_data):
+        from sklearn.base import RegressorMixin
+
         X_train, X_test, y_train, y_test = diabetes_data
         for model_name in config.REGRESSION_MODELS:
             pipe = modeling.build_pipeline(model_name)
+            estimator = pipe.steps[-1][1]
+            assert isinstance(estimator, RegressorMixin), (
+                f"{model_name} resolved to {type(estimator).__name__}, "
+                f"expected a regressor"
+            )
             pipe.fit(X_train, y_train)
             score = pipe.score(X_test, y_test)
-            assert score > -1.0, f"{model_name} R²={score:.3f} — unreasonably bad"
+            assert score > 0.0, f"{model_name} R²={score:.3f} — unreasonably bad"
 
     def test_pipeline_predict_vs_r2(self, diabetes_data):
         X_train, X_test, y_train, y_test = diabetes_data

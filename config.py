@@ -25,11 +25,11 @@ CLASSIFICATION_MODELS = {
 
 REGRESSION_MODELS = {
     "Linear Regression": "LinearRegression",
-    "Random Forest": "RandomForestRegressor",
-    "Decision Tree": "DecisionTreeRegressor",
-    "SVM": "SVR",
-    "K-Nearest Neighbors": "KNeighborsRegressor",
-    "Gradient Boosting": "GradientBoostingRegressor",
+    "Random Forest Regressor": "RandomForestRegressor",
+    "Decision Tree Regressor": "DecisionTreeRegressor",
+    "SVR": "LinearSVR",
+    "KNN Regressor": "KNeighborsRegressor",
+    "Gradient Boosting Regressor": "GradientBoostingRegressor",
 }
 
 # Data Processing Parameters

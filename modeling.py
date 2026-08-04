@@ -119,19 +119,38 @@ def run_grid_search(
     cv: int = 5,
     search_type: str = "grid",
     n_iter: int = 20,
+    scoring: str = None,
 ):
+    if scoring is None:
+        scoring = "accuracy"
+
     if search_type == "random":
         search = RandomizedSearchCV(
             pipeline, param_grid, cv=cv, n_iter=n_iter,
-            scoring="accuracy", n_jobs=-1, random_state=42,
+            scoring=scoring, n_jobs=-1, random_state=42,
         )
     else:
         search = GridSearchCV(
             pipeline, param_grid, cv=cv,
-            scoring="accuracy", n_jobs=-1,
+            scoring=scoring, n_jobs=-1,
         )
     search.fit(X_train, y_train)
     return search
+
+
+def run_random_search(
+    pipeline,
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    param_grid: dict,
+    cv: int = 5,
+    n_iter: int = 20,
+    scoring: str = None,
+):
+    return run_grid_search(
+        pipeline, X_train, y_train, param_grid,
+        cv=cv, search_type="random", n_iter=n_iter, scoring=scoring,
+    )
 
 
 def compute_learning_curve(
